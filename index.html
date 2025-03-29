@@ -238,9 +238,9 @@
     <!-- Analysis Dashboard -->
     <div id="analysisSectionContainer" class="glass-card">
       <h5 class="mb-3">Analysis Dashboard</h5>
-      <!-- Filter Row -->
+      <!-- Filter Row (removed date filters) -->
       <div class="row g-3 mb-3">
-        <div class="col-md-3">
+        <div class="col-md-6">
           <select id="filterSubject" class="form-select">
             <option value="All">All Subjects</option>
             <option>Maths</option>
@@ -249,7 +249,7 @@
             <option>GK</option>
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-6">
           <select id="filterProvider" class="form-select">
             <option value="All">All Providers</option>
             <option>Oliveboard</option>
@@ -259,14 +259,8 @@
             <option>Other</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <input type="date" id="filterFrom" class="form-control" placeholder="From Date" />
-        </div>
-        <div class="col-md-3">
-          <input type="date" id="filterTo" class="form-control" placeholder="To Date" />
-        </div>
       </div>
-      <!-- Analysis Tiles (2x2 grid) -->
+      <!-- 2x2 Grid for Analysis Tiles -->
       <div class="grid-container">
         <!-- Tile 1: Overall Progress -->
         <div class="card analysis-tile p-3">
@@ -278,10 +272,10 @@
           <h6 class="text-center">Section Performance</h6>
           <canvas id="sectionChart"></canvas>
         </div>
-        <!-- Tile 3: Datewise Progress (Maths) -->
+        <!-- Tile 3: Sectional Test Performance -->
         <div class="card analysis-tile p-3">
-          <h6 class="text-center">Datewise Progress (Maths)</h6>
-          <canvas id="datewiseProgressChart"></canvas>
+          <h6 class="text-center">Sectional Test Performance</h6>
+          <canvas id="sectionalChart"></canvas>
         </div>
         <!-- Tile 4: Text-Based Analysis -->
         <div class="card analysis-tile p-3">
@@ -303,18 +297,16 @@
     document.addEventListener("DOMContentLoaded", function() {
       // Add Enter key listener to password input for login
       document.getElementById('password').addEventListener('keydown', function(e) {
-        if (e.key === "Enter") {
-          login();
-        }
+        if (e.key === "Enter") login();
       });
       
       // Constants
       const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
-      const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
+      const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYhgfhTKL1899uEuwPx0m9SbncVkDd9YYmAreLplPV3VOWWDoFzvMw3JWg75GilM09/exec';
       
       let currentUser = localStorage.getItem('currentUser') || null;
       let marksData = [];
-      let progressChart, sectionChart, datewiseProgressChart;
+      let progressChart, sectionChart, sectionalChart;
       
       // Set today's date as default for testDate
       document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
@@ -368,9 +360,7 @@
         if (testType === 'full') {
           ['maths','english','reasoning','gk'].forEach(id => {
             const field = document.getElementById(id);
-            if (field.value.trim() === "") {
-              field.value = "0";
-            }
+            if (field.value.trim() === "") field.value = "0";
             const value = Number(field.value);
             if (isNaN(value) || value < 0 || value > 50) {
               alert("Each subject mark must be a number between 0 and 50.");
@@ -432,7 +422,7 @@
             Section: document.getElementById('section').value,
             Marks: document.getElementById('sectionMarks').value,
             Notes: notes,
-            Maths: "",
+            Maths: "", // leave blank for sectional tests
             English: "",
             Reasoning: "",
             GK: "",
@@ -477,21 +467,28 @@
           let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
                             .then(r => r.json());
           marksData = data;
+          // Apply provider and subject filter
           const analysisProv = document.getElementById('filterProvider').value;
           if (analysisProv !== 'All') {
             data = data.filter(entry => entry.Provider === analysisProv);
           }
+          const analysisSubj = document.getElementById('filterSubject').value;
+          if (analysisSubj !== 'All') {
+            data = data.filter(entry => entry.Section === analysisSubj);
+          }
+          // Overall data (both full and sectional scaled to 200)
           const overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
                                          .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
           
-          [progressChart, sectionChart, datewiseProgressChart].forEach(chart => chart?.destroy());
+          // Destroy existing charts if present
+          [progressChart, sectionChart, sectionalChart].forEach(chart => chart?.destroy());
           
           // Overall Progress Chart (Line Chart)
           progressChart = new Chart(document.getElementById('progressChart'), {
             type: 'line',
             data: {
               datasets: [{
-                label: 'Overall Marks (Sectional scaled to 200)',
+                label: 'Overall Marks (scaled to 200)',
                 data: overallDataGlobal.map(entry => ({
                   x: new Date(entry.testDate || entry.Date),
                   y: entry.TestType === 'full' ? Number(entry.Marks) : Number(entry.Marks) * 4,
@@ -512,12 +509,8 @@
                     label: function(context) {
                       const entry = overallDataGlobal[context.dataIndex];
                       let label = `${context.dataset.label}: ${context.parsed.y}`;
-                      if (entry.TestType === 'sectional') {
-                        label += ` (scaled from ${entry.Marks}/50)`;
-                      }
-                      if (entry.Notes) {
-                        label += ` (Note: ${entry.Notes})`;
-                      }
+                      if (entry.TestType === 'sectional') label += ` (scaled from ${entry.Marks}/50)`;
+                      if (entry.Notes) label += ` (Note: ${entry.Notes})`;
                       return label;
                     }
                   }
@@ -537,29 +530,13 @@
             }
           });
           
-          // Section Performance Chart (Bar Chart)
+          // Section Performance Chart (Bar Chart) - aggregates subject averages from full tests only
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             let sum = 0, count = 0;
-            data.filter(entry => entry.Section === section).forEach(entry => {
-              sum += Number(entry.Marks);
-              count++;
-            });
             data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall').forEach(entry => {
-              if (section === "Maths" && entry.Maths !== "" && !isNaN(Number(entry.Maths))) {
-                sum += Number(entry.Maths);
-                count++;
-              }
-              if (section === "English" && entry.English !== "" && !isNaN(Number(entry.English))) {
-                sum += Number(entry.English);
-                count++;
-              }
-              if (section === "Reasoning" && entry.Reasoning !== "" && !isNaN(Number(entry.Reasoning))) {
-                sum += Number(entry.Reasoning);
-                count++;
-              }
-              if (section === "GK" && entry.GK !== "" && !isNaN(Number(entry.GK))) {
-                sum += Number(entry.GK);
+              if (entry[section] !== "" && !isNaN(Number(entry[section]))) {
+                sum += Number(entry[section]);
                 count++;
               }
             });
@@ -570,50 +547,33 @@
             data: {
               labels: sections,
               datasets: [{
-                label: 'Average Marks',
+                label: 'Average Marks (Full Tests)',
                 data: sectionAverages,
                 backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
               }]
             },
             options: {
               responsive: true,
-              plugins: { title: { display: true, text: 'Section Performance' } },
+              plugins: { title: { display: true, text: 'Section Performance (Full Tests)' } },
               scales: {
                 y: { beginAtZero: true, title: { display: true, text: 'Average Marks' } }
               }
             }
           });
           
-          // Datewise Progress Chart for Maths (Line Chart)
-          const selectedSection = 'Maths';
-          const datewiseData = data.filter(entry => {
-            if (entry.TestType === 'full' && entry.Section === 'Overall') {
-              return entry.Maths !== "" && !isNaN(Number(entry.Maths));
-            } else {
-              return entry.Section === selectedSection;
-            }
-          }).sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
-          
-          datewiseProgressChart = new Chart(document.getElementById('datewiseProgressChart'), {
+          // Sectional Test Performance Chart (Line Chart) - for sectional tests only
+          const sectionalData = data.filter(entry => entry.TestType === 'sectional')
+                                    .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
+          sectionalChart = new Chart(document.getElementById('sectionalChart'), {
             type: 'line',
             data: {
               datasets: [{
-                label: `${selectedSection} Marks`,
-                data: datewiseData.map(entry => {
-                  if (entry.TestType === 'full' && entry.Section === 'Overall') {
-                    return {
-                      x: new Date(entry.testDate || entry.Date),
-                      y: Number(entry.Maths),
-                      note: entry.Notes || ''
-                    };
-                  } else {
-                    return {
-                      x: new Date(entry.testDate || entry.Date),
-                      y: Number(entry.Marks),
-                      note: entry.Notes || ''
-                    };
-                  }
-                }),
+                label: 'Sectional Test Marks (scaled to 200)',
+                data: sectionalData.map(entry => ({
+                  x: new Date(entry.testDate || entry.Date),
+                  y: Number(entry.Marks) * 4,
+                  note: entry.Notes || ''
+                })),
                 borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(),
                 tension: 0.2,
                 fill: false,
@@ -623,12 +583,14 @@
             options: {
               responsive: true,
               plugins: {
-                title: { display: true, text: `Datewise Progress for ${selectedSection}` },
+                title: { display: true, text: 'Sectional Test Performance' },
                 tooltip: {
                   callbacks: {
                     label: function(context) {
-                      const note = datewiseData[context.dataIndex].Notes;
-                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})` : `${context.dataset.label}: ${context.parsed.y}`;
+                      const entry = sectionalData[context.dataIndex];
+                      let label = `${context.dataset.label}: ${context.parsed.y}`;
+                      if (entry.Notes) label += ` (Note: ${entry.Notes})`;
+                      return label;
                     }
                   }
                 }
@@ -647,14 +609,8 @@
             }
           });
           
-          // Text-Based Analysis
-          const overallMarks = overallDataGlobal.map(entry => {
-            if (entry.TestType === 'full' && entry.Section === 'Overall') {
-              return Number(entry.Marks);
-            } else {
-              return Number(entry.Marks) * 4;
-            }
-          });
+          // Text-Based Analysis Summary
+          const overallMarks = overallDataGlobal.map(entry => entry.TestType === 'full' ? Number(entry.Marks) : Number(entry.Marks) * 4);
           const avgMarksOutOf200 = overallMarks.length ? (overallMarks.reduce((sum, m) => sum + m, 0) / overallMarks.length).toFixed(2) : 'N/A';
           document.getElementById('textAnalysis').innerHTML = `
             <p><strong>Total Tests:</strong> ${data.length}</p>
@@ -668,13 +624,14 @@
         }
       }
       
-      // Generate PDF Report
+      // Generate Detailed PDF Report with HD charts and sectionwise summaries
       async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'pt', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
         let filteredData = marksData.slice();
         
+        // Apply provider and subject filters
         const subjectFilter = document.getElementById('filterSubject').value;
         if (subjectFilter !== 'All') {
           filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
@@ -683,16 +640,8 @@
         if (providerFilter !== 'All') {
           filteredData = filteredData.filter(entry => entry.Provider === providerFilter);
         }
-        const fromDate = document.getElementById('filterFrom').value;
-        const toDate = document.getElementById('filterTo').value;
-        if (fromDate) {
-          filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) >= new Date(fromDate));
-        }
-        if (toDate) {
-          filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) <= new Date(toDate));
-        }
         
-        // Cover Page
+        // --- Cover Page ---
         doc.setFillColor(26, 35, 126);
         doc.rect(0, 0, pageWidth, 50, 'F');
         doc.setTextColor(255, 255, 255);
@@ -703,7 +652,7 @@
         doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 90);
         doc.addPage();
         
-        // Summary Section
+        // --- Summary Section ---
         const convertedMarks = filteredData.map(entry => entry.TestType === 'full' ? Number(entry.Marks) : Number(entry.Marks) * 4);
         const avgMarks = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
         let yPos = 40;
@@ -715,7 +664,7 @@
         doc.text(`Overall Average (weighted marks out of 200): ${avgMarks}`, 20, yPos + 20);
         yPos += 40;
         
-        // Provider-wise Summary (Example)
+        // --- Sectionwise Summary ---
         const providers = ['Oliveboard', 'RBE', 'Testbook', 'The Pundits', 'Other'];
         providers.forEach(provider => {
           const providerData = filteredData.filter(entry => entry.Provider === provider);
@@ -728,16 +677,43 @@
         });
         yPos += 20;
         
-        // Detailed Data Table
+        // --- Embed Charts as Images ---
+        // Capture Overall Progress Chart
+        const overallCanvas = document.getElementById('progressChart');
+        const overallImg = overallCanvas.toDataURL('image/png');
+        doc.setFontSize(16);
+        doc.text('Overall Progress Chart', 20, yPos);
+        yPos += 10;
+        doc.addImage(overallImg, 'PNG', 20, yPos, pageWidth - 40, 150);
+        yPos += 170;
+        
+        // Capture Section Performance Chart
+        const sectionCanvas = document.getElementById('sectionChart');
+        const sectionImg = sectionCanvas.toDataURL('image/png');
+        doc.text('Section Performance (Full Tests)', 20, yPos);
+        yPos += 10;
+        doc.addImage(sectionImg, 'PNG', 20, yPos, pageWidth - 40, 150);
+        yPos += 170;
+        
+        // Capture Sectional Test Performance Chart
+        const sectionalCanvas = document.getElementById('sectionalChart');
+        const sectionalImg = sectionalCanvas.toDataURL('image/png');
+        doc.text('Sectional Test Performance', 20, yPos);
+        yPos += 10;
+        doc.addImage(sectionalImg, 'PNG', 20, yPos, pageWidth - 40, 150);
+        yPos += 170;
+        
+        // --- Detailed Data Table (without Date column) ---
         doc.setFontSize(18);
         doc.text('Detailed Marks Data', 20, yPos);
         yPos += 10;
+        // Remove Date column from headers and table data
+        const tableHeaders = ['Test ID', 'Test Type', 'Section', 'Marks', 'Total', 'Notes', 'Provider', 'Maths', 'English', 'Reasoning', 'GK'];
         const tableData = filteredData.map(entry => {
           const isFull = entry.TestType === 'full';
           const total = isFull ? (Number(entry.Maths) + Number(entry.English) + Number(entry.Reasoning) + Number(entry.GK)).toString() : "N/A";
           return [
             entry.TestID || entry.testID,
-            entry.testDate || entry.Date,
             entry.TestType || '',
             entry.Section || '',
             entry.Marks || '',
@@ -750,10 +726,9 @@
             isFull ? entry.GK : "N/A"
           ];
         });
-        const headers = ['Test ID', 'Date', 'Test Type', 'Section', 'Marks', 'Total', 'Notes', 'Provider', 'Maths', 'English', 'Reasoning', 'GK'];
         doc.autoTable({
           startY: yPos,
-          head: [headers],
+          head: [tableHeaders],
           body: tableData,
           theme: 'grid',
           headStyles: { fillColor: [26, 35, 126], textColor: 255 },
