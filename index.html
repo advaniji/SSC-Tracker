@@ -419,7 +419,7 @@
             section: 'Overall',
             marks: overall,
             notes,
-            Math: subjects.Maths,
+            Maths: subjects.Maths,
             English: subjects.English,
             Reasoning: subjects.Reasoning,
             GK: subjects.GK
@@ -433,7 +433,7 @@
             section: document.getElementById('section').value,
             marks: document.getElementById('sectionMarks').value,
             notes,
-            Math: "",
+            Maths: "",
             English: "",
             Reasoning: "",
             GK: ""
@@ -481,7 +481,7 @@
             data = data.filter(entry => entry.Provider === analysisProv);
           }
           
-          // Overall Progress: combine full tests and sectional tests
+          // Overall Data: combine full tests and sectional tests
           const overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
                                          .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
 
@@ -542,15 +542,15 @@
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             let sum = 0, count = 0;
-            // Sectional tests: if the row's Section matches the subject.
+            // For sectional tests: if the row's Section matches the subject.
             data.filter(entry => entry.Section === section).forEach(entry => {
               sum += Number(entry.Marks);
               count++;
             });
-            // Full tests: read the dedicated subject column.
+            // For full tests: use the dedicated subject column.
             data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall').forEach(entry => {
-              if (section === "Maths" && entry.Math !== "" && !isNaN(Number(entry.Math))) {
-                sum += Number(entry.Math);
+              if (section === "Maths" && entry.Maths !== "" && !isNaN(Number(entry.Maths))) {
+                sum += Number(entry.Maths);
                 count++;
               }
               if (section === "English" && entry.English !== "" && !isNaN(Number(entry.English))) {
@@ -591,7 +591,7 @@
           const selectedSection = 'Maths';
           const datewiseData = data.filter(entry => {
             if (entry.TestType === 'full' && entry.Section === 'Overall') {
-              return entry.Math !== "" && !isNaN(Number(entry.Math));
+              return entry.Maths !== "" && !isNaN(Number(entry.Maths));
             } else {
               return entry.Section === selectedSection;
             }
@@ -606,7 +606,7 @@
                   if (entry.TestType === 'full' && entry.Section === 'Overall') {
                     return {
                       x: new Date(entry.testDate || entry.Date),
-                      y: Number(entry.Math),
+                      y: Number(entry.Maths),
                       note: entry.Notes || ''
                     };
                   } else {
@@ -631,8 +631,7 @@
                   callbacks: {
                     label: function(context) {
                       const note = datewiseData[context.dataIndex].Notes;
-                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
-                                  : `${context.dataset.label}: ${context.parsed.y}`;
+                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})` : `${context.dataset.label}: ${context.parsed.y}`;
                     }
                   }
                 }
@@ -652,7 +651,7 @@
           });
 
           // Text-Based Analysis (Weighted Overall Average)
-          // For full tests, overall marks are used; for sectional tests, marks are multiplied by 4.
+          // For full tests: use overall marks as stored; for sectional tests: multiply marks by 4.
           const overallMarks = overallDataGlobal.map(entry => {
             if (entry.TestType === 'full' && entry.Section === 'Overall') {
               return Number(entry.Marks);
@@ -678,10 +677,9 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'pt', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
         let filteredData = marksData.slice();
 
-        // Apply same filters as in loadCharts
+        // Apply filters (same as used in loadCharts)
         const subjectFilter = document.getElementById('filterSubject').value;
         if (subjectFilter !== 'All') {
           filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
@@ -740,7 +738,7 @@
           entry.Marks || '',
           entry.Total || '',
           entry.Notes || '',
-          entry.Math !== "" ? entry.Math : "",
+          entry.Maths !== "" ? entry.Maths : "",
           entry.English !== "" ? entry.English : "",
           entry.Reasoning !== "" ? entry.Reasoning : "",
           entry.GK !== "" ? entry.GK : ""
@@ -764,7 +762,7 @@
       // --- Attach Event Listeners ---
       document.getElementById('loginBtn').addEventListener('click', login);
       document.getElementById('saveBtn').addEventListener('click', submitData);
-      document.getElementById('filterBtn').addEventListener('click', loadCharts);
+      // The filter button is assumed to be present on marks.html; for dashboard reload, we use loadCharts on filter change if needed.
       document.getElementById('pdfBtn').addEventListener('click', generatePDF);
 
       // --- Login Function ---
@@ -801,7 +799,7 @@
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
 
-      // If a user is already logged in, show the dashboard
+      // If user is already logged in, show the dashboard
       if (currentUser) {
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
