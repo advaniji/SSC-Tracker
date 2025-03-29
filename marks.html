@@ -9,53 +9,105 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <!-- Custom Styles -->
     <style>
-      body {
-        background: #f5f7fa;
-        font-family: 'Segoe UI', sans-serif;
+      :root {
+        --primary-color: #1a237e;
+        --secondary-color: #3949ab;
+        --accent-color: #e64a19;
+        --light-bg: #f5f7fa;
+        --card-bg: rgba(255, 255, 255, 0.85);
       }
-      .table-card {
-        background: #fff;
-        border-radius: 10px;
+      body {
+        background: var(--light-bg);
+        font-family: 'Poppins', sans-serif;
+      }
+      /* Navbar Styling */
+      .navbar {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      }
+      .navbar-brand, .nav-link {
+        color: #fff !important;
+      }
+      /* Glass Card for Table */
+      .glass-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        padding: 1rem;
+        padding: 1.5rem;
         margin-top: 2rem;
+      }
+      /* Responsive adjustments */
+      @media (max-width: 576px) {
+        .glass-card {
+          margin: 1rem;
+          padding: 1rem;
+        }
       }
     </style>
   </head>
   <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">📘 SSC Tracker</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Dashboard</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
     <div class="container">
       <h3 class="mt-4 text-center">Detailed Marks Analysis</h3>
-      <div class="table-card">
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>Test ID</th>
-              <th>Date</th>
-              <th>Provider</th>
-              <th>Test Type</th>
-              <th>Section</th>
-              <th>Marks</th>
-              <th>Total</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="marksTableBody">
-            <!-- Data will be inserted here -->
-          </tbody>
-        </table>
+      <div class="glass-card">
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>Test ID</th>
+                <th>Date</th>
+                <th>Provider</th>
+                <th>Test Type</th>
+                <th>Section</th>
+                <th>Marks</th>
+                <th>Total</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="marksTableBody">
+              <!-- Data rows will be appended here -->
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="text-center mt-3">
         <a href="index.html" class="btn btn-primary">Back to Dashboard</a>
       </div>
     </div>
+
+    <!-- Script to load marks data -->
     <script>
-      // Replace with your actual sheet ID and username logic as needed.
+      // Replace with your actual sheet ID
       const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
+      // Get username from localStorage (if logged in), default to 'Advani'
       const username = localStorage.getItem('currentUser') || 'Advani';
+      
       async function loadMarks() {
         try {
-          const data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${username}`).then(r => r.json());
+          const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${username}`);
+          const data = await response.json();
           const tbody = document.getElementById('marksTableBody');
           tbody.innerHTML = '';
           data.forEach(entry => {
@@ -76,7 +128,11 @@
           console.error('Error fetching marks:', error);
         }
       }
+      
       window.onload = loadMarks;
     </script>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
