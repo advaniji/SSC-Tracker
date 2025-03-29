@@ -4,14 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SSC Tracker - Your Preparation Companion</title>
-  <!-- Bootstrap CSS with defer -->
+  <!-- Bootstrap CSS (no defer on CSS) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Google Fonts: Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <!-- Chart.js and Time Adapter -->
+  <!-- External Scripts with defer -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0" defer></script>
-  <!-- jsPDF, jsPDF-AutoTable and html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" defer></script>
@@ -278,7 +277,7 @@
     </div>
   </div>
 
-  <!-- Custom Script (runs after DOM is fully loaded) -->
+  <!-- Custom Script -->
   <script defer>
     document.addEventListener("DOMContentLoaded", function() {
       // Constants
@@ -343,8 +342,8 @@
             if (field.value.trim() === "") {
               field.value = "0";
             }
-            // Ensure value is a number and not more than 50
-            if (isNaN(field.value) || Number(field.value) > 50) {
+            const value = Number(field.value);
+            if (isNaN(value) || value < 0 || value > 50) {
               alert("Each subject mark must be a number between 0 and 50.");
               field.focus();
               throw new Error("Invalid marks");
@@ -352,7 +351,8 @@
           });
         } else {
           const sectionMarks = document.getElementById('sectionMarks').value.trim();
-          if (!sectionMarks || isNaN(sectionMarks) || Number(sectionMarks) > 50) {
+          const value = Number(sectionMarks);
+          if (!sectionMarks || isNaN(value) || value < 0 || value > 50) {
             alert("Sectional test marks must be a number between 0 and 50.");
             return false;
           }
@@ -409,7 +409,6 @@
         try {
           if (!validateInput()) return;
         } catch (e) {
-          // Validation error already alerted.
           return;
         }
         showSpinner("Saving Data...");
@@ -495,7 +494,7 @@
             }
           });
 
-          // Section Performance Chart
+          // Section Performance Chart: combine sectional entries with full test breakdowns
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             let sum = 0, count = 0;
@@ -504,7 +503,7 @@
               sum += Number(entry.Marks);
               count++;
             });
-            // For full tests (Overall), extract subject mark from breakdown
+            // For full tests (Overall), extract the subject mark from breakdown
             data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown).forEach(entry => {
               try {
                 const breakdown = JSON.parse(entry.breakdown);
@@ -615,7 +614,7 @@
             }
           });
 
-          // Combined English Analysis: combine sectional entries and full test breakdowns
+          // Combined English Analysis: combine sectional entries with full test breakdowns
           let englishMarks = [];
           data.filter(entry => entry.TestType === 'sectional' && entry.Section === 'English')
               .forEach(entry => englishMarks.push(Number(entry.Marks)));
@@ -737,7 +736,7 @@
         doc.save(`SSC_Marks_Report_${username}.pdf`);
       }
 
-      // --- Attach event listeners ---
+      // --- Attach Event Listeners ---
       document.getElementById('loginBtn').addEventListener('click', login);
       document.getElementById('saveBtn').addEventListener('click', submitData);
       document.getElementById('filterBtn').addEventListener('click', applyFilters);
@@ -777,7 +776,7 @@
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
 
-      // If a user is already logged in, show the dashboard
+      // If user is already logged in, show the dashboard
       if (currentUser) {
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -787,7 +786,7 @@
     });
   </script>
 
-  <!-- Bootstrap Bundle with Popper (defer not needed as it's at end) -->
+  <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
