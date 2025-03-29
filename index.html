@@ -234,6 +234,19 @@
 
       <!-- Analysis Section -->
       <div class="glass-card">
+        <!-- Provider Filter for Analysis -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <select id="analysisProvider" class="form-select">
+              <option value="All">All Providers</option>
+              <option value="Oliveboard">Oliveboard</option>
+              <option value="RBE">RBE</option>
+              <option value="Testbook">Testbook</option>
+              <option value="The Pundits">The Pundits</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
         <div class="row mb-3">
           <div class="col-md-6">
             <div class="card p-3">
@@ -266,7 +279,7 @@
         </div>
         <div class="text-center mt-4">
           <button onclick="generatePDF()" class="btn btn-danger btn-lg">
-            📄 Generate PDF Report
+            📄 Generate Detailed PDF Report
           </button>
         </div>
       </div>
@@ -320,7 +333,7 @@
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
 
-      // Spinner functions and disable Save button to prevent multiple submissions
+      // Spinner functions and disable Save button
       function showSpinner() {
         document.getElementById('spinnerOverlay').classList.add('active');
         document.getElementById('saveBtn').disabled = true;
@@ -334,7 +347,7 @@
         showSpinner();
         const entries = [];
         const testID = document.getElementById('testID').value;
-        const testDate = document.getElementById('testDate').value; // Custom date input
+        const testDate = document.getElementById('testDate').value;
         const provider = document.getElementById('provider').value;
         const testType = document.getElementById('testType').value;
         const notes = document.getElementById('notes').value;
@@ -400,14 +413,19 @@
 
       async function loadCharts() {
         try {
-          const data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
+          let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
             .then((r) => r.json());
-          // Store overall data globally for tooltip access
+          
+          // Apply provider filter from analysisProvider dropdown if not "All"
+          const analysisProv = document.getElementById('analysisProvider').value;
+          if (analysisProv !== 'All') {
+            data = data.filter(entry => entry.Provider === analysisProv);
+          }
+          
           overallDataGlobal = data
             .filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
             .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
 
-          // Destroy previous charts if they exist
           [progressChart, sectionChart, sectionTimeSeriesChart].forEach(chart => chart?.destroy());
 
           // Overall Progress Chart with time scale
@@ -435,7 +453,7 @@
                   callbacks: {
                     label: function(context) {
                       const note = overallDataGlobal[context.dataIndex].Notes;
-                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})` 
+                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
                                   : `${context.dataset.label}: ${context.parsed.y}`;
                     }
                   }
@@ -509,7 +527,7 @@
                   callbacks: {
                     label: function(context) {
                       const note = sectionData[context.dataIndex].Notes;
-                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})` 
+                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
                                   : `${context.dataset.label}: ${context.parsed.y}`;
                     }
                   }
@@ -533,32 +551,49 @@
         }
       }
 
+      // Re-load charts when the analysis filters change
       document.getElementById('analysisSection').addEventListener('change', loadCharts);
+      document.getElementById('analysisProvider').addEventListener('change', loadCharts);
 
       async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
 
-        // Centered Header
+        // Header with centered text and filter details
         doc.setFontSize(22);
         const headerText = 'SSC Tracker Report';
         doc.text(headerText, (pageWidth - doc.getTextWidth(headerText)) / 2, 20);
         doc.setFontSize(12);
         const userText = `User: ${currentUser}`;
         const dateText = `Generated: ${new Date().toLocaleString()}`;
+        const provFilter = document.getElementById('analysisProvider').value;
+        const filterText = provFilter === 'All' ? 'All Providers' : `Provider: ${provFilter}`;
         doc.text(userText, (pageWidth - doc.getTextWidth(userText)) / 2, 30);
         doc.text(dateText, (pageWidth - doc.getTextWidth(dateText)) / 2, 38);
+        doc.text(filterText, (pageWidth - doc.getTextWidth(filterText)) / 2, 46);
 
-        // Add charts with improved quality using a higher scale
-        let yPos = 45;
+        // Add charts with improved quality (using scale: 3 for HD images)
+        let yPos = 55;
         const chartIds = ['progressChart', 'sectionChart', 'sectionTimeSeriesChart'];
         for (const chartId of chartIds) {
           const canvas = document.getElementById(chartId);
-          const imgData = await html2canvas(canvas, { scale: 2 }).then(c => c.toDataURL('image/png'));
-          doc.addImage(imgData, 'PNG', 15, yPos, pageWidth - 30, 80);
-          yPos += 90;
+          const imgData = await html2canvas(canvas, { scale: 3 }).then(c => c.toDataURL('image/png'));
+          doc.addImage(imgData, 'PNG', 15, yPos, pageWidth - 30, 90);
+          yPos += 100;
         }
+
+        // Generate a summary table of key metrics from overall data
+        const totalTests = overallDataGlobal.length;
+        const overallAvg = overallDataGlobal.length 
+          ? (overallDataGlobal.reduce((sum, entry) => sum + Number(entry.Marks), 0) / overallDataGlobal.length).toFixed(2)
+          : 'N/A';
+        const summaryText = `Total Tests: ${totalTests}\nOverall Average Marks: ${overallAvg}`;
+        doc.setFontSize(14);
+        doc.text('Summary', 15, yPos + 10);
+        doc.setFontSize(12);
+        doc.text(summaryText, 15, yPos + 20);
+
         // Centered Footer
         doc.setFontSize(10);
         const footerText = 'Created with SSC Tracker - By Advani Ji';
