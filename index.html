@@ -11,10 +11,9 @@
     <!-- Chart.js and Time Adapter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
-    <!-- jsPDF and jsPDF-AutoTable for PDF tables -->
+    <!-- jsPDF, jsPDF-AutoTable and html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <!-- html2canvas -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <!-- Custom Styles -->
     <style>
@@ -26,7 +25,8 @@
         --card-bg: rgba(255, 255, 255, 0.85);
       }
       body {
-        background: var(--light-bg);
+        /* New background gradient for a dynamic feel */
+        background: linear-gradient(135deg, #f5f7fa, #e0eafc);
         font-family: 'Poppins', sans-serif;
       }
       /* Navbar Styling */
@@ -36,6 +36,9 @@
       }
       .navbar-brand, .nav-link {
         color: #fff !important;
+      }
+      .navbar-brand:hover {
+        text-decoration: none;
       }
       /* Centering login card */
       .login-container {
@@ -62,10 +65,10 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         padding: 1.5rem;
         margin-bottom: 1.5rem;
+        transition: transform 0.2s ease;
       }
       .glass-card:hover {
         transform: translateY(-2px);
-        transition: transform 0.2s ease;
       }
       /* Spinner Overlay */
       #spinnerOverlay {
@@ -110,14 +113,15 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
       <div class="container">
-        <a class="navbar-brand fw-bold" href="#">📘 SSC Tracker</a>
+        <!-- Brand links to your profile page -->
+        <a class="navbar-brand fw-bold" href="https://advaniji.github.io/SSC-Tracker/" target="_blank">📘 SSC Tracker</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <!-- "Back to Dashboard" now simply shows the dashboard -->
+              <!-- Back to Dashboard simply reveals the dashboard -->
               <a class="nav-link" href="#" onclick="showDashboard()">Dashboard</a>
             </li>
             <li class="nav-item">
@@ -128,7 +132,7 @@
       </div>
     </nav>
 
-    <!-- Login Section (Shown initially if not logged in) -->
+    <!-- Login Section (Shown if not logged in) -->
     <div id="loginContainer" class="login-container">
       <div class="login-card shadow">
         <h4 class="mb-4 text-center">Welcome to SSC Tracker</h4>
@@ -263,7 +267,7 @@
           <div class="col-md-6 mb-3">
             <div class="card analysis-tile p-3">
               <h6 class="text-center">Text-Based Marks Analysis</h6>
-              <!-- Uses full dataset with weighted average -->
+              <!-- Now shows overall average (converted to marks out of 200) -->
               <div id="textAnalysis" class="mt-2"></div>
               <div class="text-center mt-2">
                 <a href="marks.html" class="btn btn-outline-primary btn-sm">View Full Analysis</a>
@@ -492,7 +496,7 @@
             }
           });
 
-          // Rename Section Time-Series to "Datewise Progress"
+          // Datewise Progress (renamed from Section Time-Series)
           const selectedSection = document.getElementById('analysisSection') ? document.getElementById('analysisSection').value : 'Maths';
           const datewiseData = data.filter(entry => entry.Section === selectedSection)
             .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
@@ -540,15 +544,15 @@
             }
           });
 
-          // Improved Text-Based Analysis with Weighted Average Calculation
-          const totalTests = data.length;
-          const totalMarksObtained = data.reduce((sum, entry) => sum + Number(entry.Marks), 0);
-          const totalPossibleMarks = data.reduce((sum, entry) => sum + Number(entry.Total), 0);
-          const overallWeightedAvg = totalPossibleMarks ? ((totalMarksObtained / totalPossibleMarks) * 100).toFixed(2) + '%' : 'N/A';
+          // Calculate overall average marks (convert sectional tests: multiply by 4 to get marks out of 200)
+          const convertedMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
+          const avgMarksOutOf200 = convertedMarks.length
+            ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2)
+            : 'N/A';
 
           document.getElementById('textAnalysis').innerHTML = `
-            <p><strong>Total Tests:</strong> ${totalTests}</p>
-            <p><strong>Overall Weighted Average:</strong> ${overallWeightedAvg}</p>
+            <p><strong>Total Tests:</strong> ${data.length}</p>
+            <p><strong>Overall Average (out of 200):</strong> ${avgMarksOutOf200}</p>
           `;
         } catch (error) {
           console.error('Error loading charts:', error);
@@ -562,13 +566,17 @@
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
 
-        // Modern styled header
+        // Modern styled header with bold tagline
         doc.setFillColor(26, 35, 126);
         doc.rect(0, 0, pageWidth, 30, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(20);
         const headerText = 'SSC Tracker Report';
         doc.text(headerText, (pageWidth - doc.getTextWidth(headerText)) / 2, 20);
+        doc.setFont(undefined, 'bold');
+        const tagline = "CGL : one last time";
+        doc.text(tagline, (pageWidth - doc.getTextWidth(tagline)) / 2, 28);
+        doc.setFont(undefined, 'normal');
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
         doc.text(`User: ${currentUser}`, 15, 40);
@@ -576,48 +584,42 @@
 
         let yPos = 55;
         const chartIds = ['progressChart', 'sectionChart', 'datewiseProgressChart'];
-        // Increase scale to 4 for better image quality
+        // Use html2canvas with scale 4 and add images as JPEG with "NONE" compression
         for (const chartId of chartIds) {
           const canvas = document.getElementById(chartId);
-          const imgData = await html2canvas(canvas, { scale: 4 }).then(c => c.toDataURL('image/png'));
-          doc.addImage(imgData, 'PNG', 15, yPos, pageWidth - 30, 90);
+          const imgData = await html2canvas(canvas, { scale: 4, useCORS: true }).then(c => c.toDataURL('image/jpeg', 1.0));
+          doc.addImage(imgData, 'JPEG', 15, yPos, pageWidth - 30, 90, undefined, 'NONE');
           yPos += 100;
         }
         
-        // Add a summary section
+        // Summary Section
         const fullTests = [];
         const sectionalTests = [];
         let subjectTotals = { Maths: { marks: 0, count: 0 }, English: { marks: 0, count: 0 }, Reasoning: { marks: 0, count: 0 }, GK: { marks: 0, count: 0 } };
 
-        // Fetch all data for full pdf report
         let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
         data.forEach(entry => {
           if (entry.TestType === 'full') {
             fullTests.push(entry);
-            if (entry.Section !== 'Overall') {
-              if (subjectTotals[entry.Section]) {
-                subjectTotals[entry.Section].marks += Number(entry.Marks);
-                subjectTotals[entry.Section].count++;
-              }
+            if (entry.Section !== 'Overall' && subjectTotals[entry.Section]) {
+              subjectTotals[entry.Section].marks += Number(entry.Marks);
+              subjectTotals[entry.Section].count++;
             }
           } else {
             sectionalTests.push(entry);
           }
         });
-        // Use weighted average for overall performance
-        const totalMarksObtained = data.reduce((sum, entry) => sum + Number(entry.Marks), 0);
-        const totalPossibleMarks = data.reduce((sum, entry) => sum + Number(entry.Total), 0);
-        const overallWeightedAvg = totalPossibleMarks ? ((totalMarksObtained / totalPossibleMarks) * 100).toFixed(2) + '%' : 'N/A';
+        const convertedMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
+        const avgMarksOutOf200 = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
 
         doc.setFontSize(14);
         doc.text('Summary', 15, yPos + 10);
         doc.setFontSize(12);
         doc.text(`Total Tests: ${data.length}`, 15, yPos + 20);
-        doc.text(`Overall Weighted Average: ${overallWeightedAvg}`, 15, yPos + 30);
+        doc.text(`Overall Average (out of 200): ${avgMarksOutOf200}`, 15, yPos + 30);
 
         yPos += 40;
-        // Use jsPDF-AutoTable for tables
-        // Full Length Tests Summary
+        // Full Length Tests Table using jsPDF-AutoTable
         if(fullTests.length > 0) {
           const fullTestData = fullTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Marks, test.Total, test.Notes]);
           doc.autoTable({
@@ -631,7 +633,7 @@
           yPos = doc.lastAutoTable.finalY + 10;
         }
 
-        // Sectional Tests Summary
+        // Sectional Tests Table
         if(sectionalTests.length > 0) {
           const sectionalData = sectionalTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Section, test.Marks, test.Total, test.Notes]);
           doc.autoTable({
@@ -645,7 +647,7 @@
           yPos = doc.lastAutoTable.finalY + 10;
         }
 
-        // Subject-wise Analysis for full length tests (excluding Overall)
+        // Subject-wise Analysis Table
         const subjectRows = [];
         for (const subject in subjectTotals) {
           const avg = subjectTotals[subject].count ? (subjectTotals[subject].marks / subjectTotals[subject].count).toFixed(2) : 'N/A';
