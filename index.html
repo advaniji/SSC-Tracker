@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SSC Tracker - Your Preparation Companion</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
     <!-- Chart.js and Time Adapter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
@@ -18,18 +24,16 @@
     <!-- Custom Styles -->
     <style>
       :root {
-        --primary-color: #1a237e; /* Dark blue */
-        --secondary-color: #3949ab; /* Indigo */
-        --accent-color: #e64a19; /* Deep orange */
+        --primary-color: #1a237e;
+        --secondary-color: #3949ab;
+        --accent-color: #e64a19;
         --light-bg: #f5f7fa;
         --card-bg: rgba(255, 255, 255, 0.85);
       }
       body {
-        /* New background gradient for a dynamic feel */
         background: linear-gradient(135deg, #f5f7fa, #e0eafc);
         font-family: 'Poppins', sans-serif;
       }
-      /* Navbar Styling */
       .navbar {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -40,7 +44,6 @@
       .navbar-brand:hover {
         text-decoration: none;
       }
-      /* Centering login card */
       .login-container {
         min-height: 100vh;
         display: flex;
@@ -57,7 +60,6 @@
         max-width: 400px;
         width: 100%;
       }
-      /* Glassmorphism effect for cards */
       .glass-card {
         background: var(--card-bg);
         backdrop-filter: blur(10px);
@@ -70,7 +72,6 @@
       .glass-card:hover {
         transform: translateY(-2px);
       }
-      /* Spinner Overlay */
       #spinnerOverlay {
         position: fixed;
         top: 0;
@@ -90,7 +91,6 @@
         opacity: 1;
         pointer-events: all;
       }
-      /* Analysis Grid */
       .analysis-tile {
         min-height: 300px;
       }
@@ -113,7 +113,6 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
       <div class="container">
-        <!-- Brand links to your profile page -->
         <a class="navbar-brand fw-bold" href="https://advaniji.github.io/SSC-Tracker/" target="_blank">📘 SSC Tracker</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
@@ -121,7 +120,6 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <!-- Back to Dashboard simply reveals the dashboard -->
               <a class="nav-link" href="#" onclick="showDashboard()">Dashboard</a>
             </li>
             <li class="nav-item">
@@ -132,7 +130,7 @@
       </div>
     </nav>
 
-    <!-- Login Section (Shown if not logged in) -->
+    <!-- Login Section -->
     <div id="loginContainer" class="login-container">
       <div class="login-card shadow">
         <h4 class="mb-4 text-center">Welcome to SSC Tracker</h4>
@@ -153,7 +151,7 @@
       </div>
     </div>
 
-    <!-- Main Content: Data Entry and Analysis Dashboard -->
+    <!-- Main Content -->
     <div id="mainContent" class="container my-4" style="display:none;">
       <!-- Data Entry Form -->
       <div id="dataForm" class="glass-card">
@@ -260,14 +258,12 @@
           <div class="col-md-6 mb-3">
             <div class="card analysis-tile p-3">
               <h6 class="text-center">Datewise Progress</h6>
-              <!-- Renamed from Section Time-Series -->
               <canvas id="datewiseProgressChart"></canvas>
             </div>
           </div>
           <div class="col-md-6 mb-3">
             <div class="card analysis-tile p-3">
               <h6 class="text-center">Text-Based Marks Analysis</h6>
-              <!-- Now shows overall average (converted to marks out of 200) -->
               <div id="textAnalysis" class="mt-2"></div>
               <div class="text-center mt-2">
                 <a href="marks.html" class="btn btn-outline-primary btn-sm">View Full Analysis</a>
@@ -310,7 +306,6 @@
             if (passwords[username] === password) {
               currentUser = username;
               localStorage.setItem('currentUser', currentUser);
-              // Hide login and show main content
               document.getElementById('loginContainer').style.display = 'none';
               document.getElementById('mainContent').style.display = 'block';
               loadCharts();
@@ -325,7 +320,6 @@
           });
       }
 
-      // Used for "Back to Dashboard" without logging out
       function showDashboard() {
         document.getElementById('mainContent').style.display = 'block';
       }
@@ -421,7 +415,6 @@
           if (analysisProv !== 'All') {
             data = data.filter(entry => entry.Provider === analysisProv);
           }
-          // For charting, show only Overall and sectional entries
           overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
                                    .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
 
@@ -496,7 +489,6 @@
             }
           });
 
-          // Datewise Progress (renamed from Section Time-Series)
           const selectedSection = document.getElementById('analysisSection') ? document.getElementById('analysisSection').value : 'Maths';
           const datewiseData = data.filter(entry => entry.Section === selectedSection)
             .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
@@ -544,15 +536,13 @@
             }
           });
 
-          // Calculate overall average marks (convert sectional tests: multiply by 4 to get marks out of 200)
+          // Calculate overall average marks (convert sectional tests by multiplying marks by 4 to scale to 200)
           const convertedMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
-          const avgMarksOutOf200 = convertedMarks.length
-            ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2)
-            : 'N/A';
+          const avgMarksOutOf200 = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
 
           document.getElementById('textAnalysis').innerHTML = `
             <p><strong>Total Tests:</strong> ${data.length}</p>
-            <p><strong>Overall Average (out of 200):</strong> ${avgMarksOutOf200}</p>
+            <p><strong>Overall Average (marks out of 200):</strong> ${avgMarksOutOf200}</p>
           `;
         } catch (error) {
           console.error('Error loading charts:', error);
@@ -566,38 +556,52 @@
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
 
-        // Modern styled header with bold tagline
+        // --- Cover Page ---
         doc.setFillColor(26, 35, 126);
-        doc.rect(0, 0, pageWidth, 30, 'F');
+        doc.rect(0, 0, pageWidth, 40, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(20);
-        const headerText = 'SSC Tracker Report';
-        doc.text(headerText, (pageWidth - doc.getTextWidth(headerText)) / 2, 20);
+        doc.setFontSize(24);
+        doc.text('SSC Tracker Report', pageWidth / 2, 22, { align: 'center' });
+        doc.setFontSize(16);
         doc.setFont(undefined, 'bold');
-        const tagline = "CGL : one last time";
-        doc.text(tagline, (pageWidth - doc.getTextWidth(tagline)) / 2, 28);
+        doc.text('CGL : one last time', pageWidth / 2, 32, { align: 'center' });
         doc.setFont(undefined, 'normal');
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
-        doc.text(`User: ${currentUser}`, 15, 40);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 48);
+        doc.text(`User: ${currentUser}`, 15, 50);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 58);
+        doc.addPage();
 
-        let yPos = 55;
+        // --- Section 1: Charts ---
+        let yPos = 15;
+        doc.setFontSize(18);
+        doc.text('Charts Overview', 15, yPos);
+        yPos += 5;
         const chartIds = ['progressChart', 'sectionChart', 'datewiseProgressChart'];
-        // Use html2canvas with scale 4 and add images as JPEG with "NONE" compression
         for (const chartId of chartIds) {
           const canvas = document.getElementById(chartId);
-          const imgData = await html2canvas(canvas, { scale: 4, useCORS: true }).then(c => c.toDataURL('image/jpeg', 1.0));
+          const imgData = await html2canvas(canvas, { scale: 5, useCORS: true }).then(c => c.toDataURL('image/jpeg', 1.0));
           doc.addImage(imgData, 'JPEG', 15, yPos, pageWidth - 30, 90, undefined, 'NONE');
-          yPos += 100;
+          yPos += 95;
+          // If yPos is getting close to page bottom, add a new page
+          if (yPos > doc.internal.pageSize.getHeight() - 30) {
+            doc.addPage();
+            yPos = 15;
+          }
         }
-        
-        // Summary Section
+
+        // --- Section 2: Detailed Data Tables ---
+        doc.addPage();
+        yPos = 15;
+        doc.setFontSize(18);
+        doc.text('Detailed Test Data', 15, yPos);
+        yPos += 5;
+        // Fetch fresh data
+        let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
+        // Separate full and sectional tests and prepare subject summary
         const fullTests = [];
         const sectionalTests = [];
         let subjectTotals = { Maths: { marks: 0, count: 0 }, English: { marks: 0, count: 0 }, Reasoning: { marks: 0, count: 0 }, GK: { marks: 0, count: 0 } };
-
-        let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
         data.forEach(entry => {
           if (entry.TestType === 'full') {
             fullTests.push(entry);
@@ -609,17 +613,15 @@
             sectionalTests.push(entry);
           }
         });
+        // Overall average (marks out of 200)
         const convertedMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
         const avgMarksOutOf200 = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
-
         doc.setFontSize(14);
-        doc.text('Summary', 15, yPos + 10);
-        doc.setFontSize(12);
-        doc.text(`Total Tests: ${data.length}`, 15, yPos + 20);
-        doc.text(`Overall Average (out of 200): ${avgMarksOutOf200}`, 15, yPos + 30);
+        doc.text(`Total Tests: ${data.length}`, 15, yPos);
+        doc.text(`Overall Average (marks out of 200): ${avgMarksOutOf200}`, 15, yPos + 8);
+        yPos += 16;
 
-        yPos += 40;
-        // Full Length Tests Table using jsPDF-AutoTable
+        // Full Length Tests Table
         if(fullTests.length > 0) {
           const fullTestData = fullTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Marks, test.Total, test.Notes]);
           doc.autoTable({
@@ -635,7 +637,14 @@
 
         // Sectional Tests Table
         if(sectionalTests.length > 0) {
-          const sectionalData = sectionalTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Section, test.Marks, test.Total, test.Notes]);
+          const sectionalData = sectionalTests.map(test => [
+            test.TestID || test.testID,
+            test.testDate || test.Date,
+            test.Section,
+            test.Marks,
+            test.Total,
+            test.Notes
+          ]);
           doc.autoTable({
             startY: yPos,
             head: [['Test ID', 'Date', 'Section', 'Marks', 'Total', 'Notes']],
@@ -668,7 +677,6 @@
         doc.save(`SSC_Report_${currentUser}.pdf`);
       }
 
-      // If already logged in (from localStorage), show main content automatically
       if (currentUser) {
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
