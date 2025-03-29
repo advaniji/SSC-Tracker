@@ -12,14 +12,17 @@
       :root {
         --primary-color: #2c3e50;
         --secondary-color: #3498db;
+        --accent-color: #e74c3c;
       }
       body {
         background: #f8f9fa;
-        font-family: 'Segoe UI', system-ui;
+        font-family: 'Segoe UI', sans-serif;
       }
       .brand-header {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        color: #fff;
+        text-align: center;
+        padding: 2rem 0;
       }
       .glass-card {
         background: rgba(255, 255, 255, 0.95);
@@ -36,56 +39,70 @@
       .section-input:hover {
         transform: translateY(-3px);
       }
+      /* Spinner overlay with fade-out effect */
+      #spinnerOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+      #spinnerOverlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
     </style>
   </head>
   <body>
-    <!-- Header -->
-    <header class="brand-header text-white py-4 mb-5">
-      <div class="container text-center">
-        <h1 class="display-4 fw-bold mb-2">📘 SSC Tracker</h1>
-        <p class="lead mb-0">Master Your SSC Preparation • By Advani Ji</p>
+    <!-- Spinner Overlay -->
+    <div id="spinnerOverlay">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Saving...</span>
       </div>
+    </div>
+
+    <!-- Header -->
+    <header class="brand-header">
+      <h1 class="display-4 fw-bold mb-2">📘 SSC Tracker</h1>
+      <p class="lead mb-0">Master Your SSC Preparation • By Advani Ji</p>
     </header>
 
     <div class="container">
-      <!-- Login Section -->
-      <div id="loginSection" class="glass-card">
-        <div class="row g-3 align-items-center">
-          <div class="col-md-4">
-            <select id="username" class="form-select form-select-lg">
-              <option>Advani</option>
-              <option>Siamaq</option>
-              <option>Souvik</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <input
-              type="password"
-              id="password"
-              class="form-control form-control-lg"
-              placeholder="Your Password"
-            />
-          </div>
-          <div class="col-md-4">
-            <button onclick="login()" class="btn btn-lg btn-light w-100">
-              🔑 Login
-            </button>
-          </div>
+      <!-- Minimal Modern Login -->
+      <div id="loginSection" class="glass-card mx-auto" style="max-width: 400px;">
+        <h4 class="mb-3 text-center">Login</h4>
+        <div class="mb-3">
+          <select id="username" class="form-select form-select-lg">
+            <option>Advani</option>
+            <option>Siamaq</option>
+            <option>Souvik</option>
+            <option>Other</option>
+          </select>
         </div>
+        <div class="mb-3">
+          <input
+            type="password"
+            id="password"
+            class="form-control form-control-lg"
+            placeholder="Your Password"
+          />
+        </div>
+        <button onclick="login()" class="btn btn-primary btn-lg w-100">🔑 Login</button>
       </div>
 
       <!-- Data Entry Form -->
       <div id="dataForm" class="glass-card" style="display: none;">
         <div class="row g-3 mb-3">
-          <!-- Test ID, Provider & Test Type -->
           <div class="col-md-4">
-            <input
-              type="text"
-              id="testID"
-              class="form-control form-control-lg"
-              placeholder="Test ID"
-            />
+            <input type="text" id="testID" class="form-control form-control-lg" placeholder="Test ID" />
           </div>
           <div class="col-md-4">
             <select id="provider" class="form-select form-select-lg">
@@ -104,54 +121,30 @@
           </div>
         </div>
 
-        <!-- Full Length Test Sections -->
+        <!-- Full Test Sections -->
         <div id="fullTestSections" class="row g-3" style="display: none;">
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
               <label class="text-muted small mb-1">Maths</label>
-              <input
-                type="number"
-                class="form-control full-section"
-                data-section="Maths"
-                max="50"
-                placeholder="/50"
-              />
+              <input type="number" class="form-control full-section" data-section="Maths" max="50" placeholder="/50" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
               <label class="text-muted small mb-1">English</label>
-              <input
-                type="number"
-                class="form-control full-section"
-                data-section="English"
-                max="50"
-                placeholder="/50"
-              />
+              <input type="number" class="form-control full-section" data-section="English" max="50" placeholder="/50" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
               <label class="text-muted small mb-1">Reasoning</label>
-              <input
-                type="number"
-                class="form-control full-section"
-                data-section="Reasoning"
-                max="50"
-                placeholder="/50"
-              />
+              <input type="number" class="form-control full-section" data-section="Reasoning" max="50" placeholder="/50" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
               <label class="text-muted small mb-1">GK</label>
-              <input
-                type="number"
-                class="form-control full-section"
-                data-section="GK"
-                max="50"
-                placeholder="/50"
-              />
+              <input type="number" class="form-control full-section" data-section="GK" max="50" placeholder="/50" />
             </div>
           </div>
         </div>
@@ -167,46 +160,49 @@
             </select>
           </div>
           <div class="col-md-6">
-            <input
-              type="number"
-              id="sectionMarks"
-              class="form-control form-control-lg"
-              placeholder="Marks out of 50"
-              max="50"
-            />
+            <input type="number" id="sectionMarks" class="form-control form-control-lg" placeholder="Marks out of 50" max="50" />
           </div>
         </div>
 
         <div class="row mt-3">
           <div class="col-md-12">
-            <button onclick="submitData()" class="btn btn-lg btn-primary w-100">
-              💾 Save Entry
-            </button>
+            <button onclick="submitData()" class="btn btn-success btn-lg w-100">💾 Save Entry</button>
           </div>
         </div>
       </div>
 
       <!-- Analysis Section -->
       <div class="glass-card">
-        <div class="row">
-          <div class="col-md-6 mb-4">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title">Progress Timeline</h5>
-                <canvas id="progressChart"></canvas>
-              </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="card p-3">
+              <h5 class="text-center">Overall Progress</h5>
+              <canvas id="progressChart"></canvas>
             </div>
           </div>
-          <div class="col-md-6 mb-4">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title">Section Performance</h5>
-                <canvas id="sectionChart"></canvas>
-              </div>
+          <div class="col-md-6">
+            <div class="card p-3">
+              <h5 class="text-center">Section Performance</h5>
+              <canvas id="sectionChart"></canvas>
             </div>
           </div>
         </div>
-
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <select id="analysisSection" class="form-select">
+              <option value="Maths">Maths</option>
+              <option value="English">English</option>
+              <option value="Reasoning">Reasoning</option>
+              <option value="GK">GK</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <div class="card p-3">
+              <h5 class="text-center">Section Time-Series</h5>
+              <canvas id="sectionTimeSeriesChart"></canvas>
+            </div>
+          </div>
+        </div>
         <div class="text-center mt-4">
           <button onclick="generatePDF()" class="btn btn-danger btn-lg">
             📄 Generate PDF Report
@@ -221,16 +217,13 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <script>
-      // Configuration with provided sheet ID and web app URL
       const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
       const APP_SCRIPT_URL =
         'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
 
-      // State management
       let currentUser = null;
-      let progressChart, sectionChart;
+      let progressChart, sectionChart, sectionTimeSeriesChart;
 
-      // Login function with basic error logging
       async function login() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
@@ -252,7 +245,6 @@
         }
       }
 
-      // Toggle form elements based on test type
       function setupFormToggle() {
         document.getElementById('testType').addEventListener('change', function () {
           const isFullTest = this.value === 'full';
@@ -262,8 +254,17 @@
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
 
-      // Submit test data to the Apps Script endpoint
+      function showSpinner() {
+        const spinner = document.getElementById('spinnerOverlay');
+        spinner.classList.add('active');
+      }
+      function hideSpinner() {
+        const spinner = document.getElementById('spinnerOverlay');
+        spinner.classList.remove('active');
+      }
+
       async function submitData() {
+        showSpinner();
         const entries = [];
         const testID = document.getElementById('testID').value;
         const provider = document.getElementById('provider').value;
@@ -319,18 +320,16 @@
           console.error('Submission error:', error);
           alert(`❌ Error: ${error.message}`);
         }
+        hideSpinner();
       }
 
-      // Load charts using data from your Google Sheet
       async function loadCharts() {
         try {
           const data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
             .then((r) => r.json());
 
-          // Destroy previous charts if any
-          [progressChart, sectionChart].forEach((chart) => chart?.destroy());
+          [progressChart, sectionChart, sectionTimeSeriesChart].forEach(chart => chart?.destroy());
 
-          // Prepare overall progress data: full test Overall rows and sectional tests
           const overallData = data
             .filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
             .sort((a, b) => new Date(a.Date) - new Date(b.Date));
@@ -354,14 +353,12 @@
             }
           });
 
-          // Calculate average marks per section (excluding Overall rows)
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             const sectionData = data.filter(entry => entry.Section === section);
             const totalMarks = sectionData.reduce((sum, entry) => sum + Number(entry.Marks), 0);
             return sectionData.length ? (totalMarks / sectionData.length).toFixed(2) : 0;
           });
-
           sectionChart = new Chart(document.getElementById('sectionChart'), {
             type: 'bar',
             data: {
@@ -378,32 +375,62 @@
               scales: { y: { beginAtZero: true, title: { display: true, text: 'Average Marks' } } }
             }
           });
+
+          const selectedSection = document.getElementById('analysisSection').value;
+          const sectionData = data.filter(entry => entry.Section === selectedSection);
+          sectionData.sort((a, b) => new Date(a.Date) - new Date(b.Date));
+          sectionTimeSeriesChart = new Chart(document.getElementById('sectionTimeSeriesChart'), {
+            type: 'line',
+            data: {
+              labels: sectionData.map(entry => new Date(entry.Date).toLocaleDateString()),
+              datasets: [{
+                label: `${selectedSection} Marks`,
+                data: sectionData.map(entry => Number(entry.Marks)),
+                borderColor: var(--accent-color),
+                tension: 0.2,
+                fill: false
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { title: { display: true, text: `${selectedSection} Over Time` } },
+              scales: { y: { beginAtZero: true, title: { display: true, text: 'Marks' } } }
+            }
+          });
         } catch (error) {
           console.error('Error loading charts:', error);
         }
       }
 
-      // Generate a PDF report including the charts
+      document.getElementById('analysisSection').addEventListener('change', loadCharts);
+
       async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
 
+        // Centered header
         doc.setFontSize(22);
-        doc.text('SSC Tracker Report', 15, 15);
+        const headerText = 'SSC Tracker Report';
+        const headerX = (pageWidth - doc.getTextWidth(headerText)) / 2;
+        doc.text(headerText, headerX, 20);
         doc.setFontSize(12);
-        doc.text(`User: ${currentUser}`, 15, 25);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 30);
+        const userText = `User: ${currentUser}`;
+        const dateText = `Generated: ${new Date().toLocaleString()}`;
+        doc.text(userText, (pageWidth - doc.getTextWidth(userText)) / 2, 30);
+        doc.text(dateText, (pageWidth - doc.getTextWidth(dateText)) / 2, 38);
 
-        const charts = ['progressChart', 'sectionChart'];
-        let yPos = 40;
-        for (const chartId of charts) {
+        let yPos = 45;
+        const chartIds = ['progressChart', 'sectionChart', 'sectionTimeSeriesChart'];
+        for (const chartId of chartIds) {
           const canvas = document.getElementById(chartId);
-          const imgData = await html2canvas(canvas).then(c => c.toDataURL('image/png'));
-          doc.addImage(imgData, 'PNG', 15, yPos, 180, 80);
+          const imgData = await html2canvas(canvas, { scale: 2 }).then(c => c.toDataURL('image/png'));
+          doc.addImage(imgData, 'PNG', 15, yPos, pageWidth - 30, 80);
           yPos += 90;
         }
         doc.setFontSize(10);
-        doc.text('Created with SSC Tracker - By Advani Ji', 15, doc.internal.pageSize.height - 10);
+        const footerText = 'Created with SSC Tracker - By Advani Ji';
+        doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, doc.internal.pageSize.getHeight() - 10);
         doc.save(`SSC_Report_${currentUser}.pdf`);
       }
     </script>
