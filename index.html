@@ -9,42 +9,42 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <!-- Chart.js Time Adapter -->
+    <!-- Chart.js and Time Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+    <!-- Custom Styles -->
     <style>
       :root {
-        --primary-color: #1a237e; /* Dark blue */
-        --secondary-color: #3949ab; /* Indigo */
-        --accent-color: #e64a19; /* Deep orange */
-        --bg-card: rgba(255, 255, 255, 0.98);
+        --primary-color: #1a237e;
+        --secondary-color: #3949ab;
+        --accent-color: #e64a19;
+        --bg-card: #ffffff;
       }
       body {
-        background: #eceff1;
+        background: #f5f7fa;
         font-family: 'Segoe UI', sans-serif;
       }
-      .brand-header {
+      /* Navbar */
+      .navbar {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: #fff;
-        text-align: center;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
       }
+      .navbar-brand, .nav-link {
+        color: #fff !important;
+      }
+      /* Glass Card */
       .glass-card {
         background: var(--bg-card);
-        backdrop-filter: blur(10px);
         border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         margin-bottom: 1.5rem;
         padding: 1.5rem;
       }
-      .section-input {
-        transition: transform 0.2s ease;
-      }
+      /* Hover effect for section inputs */
       .section-input:hover {
         transform: translateY(-3px);
+        transition: transform 0.2s ease;
       }
-      /* Spinner overlay with fade effect */
+      /* Spinner overlay */
       #spinnerOverlay {
         position: fixed;
         top: 0;
@@ -64,24 +64,39 @@
         opacity: 1;
         pointer-events: all;
       }
+      /* Analysis Grid */
+      .analysis-tile {
+        min-height: 300px;
+      }
     </style>
   </head>
   <body>
     <!-- Spinner Overlay -->
     <div id="spinnerOverlay">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Saving...</span>
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
-    <!-- Header -->
-    <header class="brand-header">
-      <h1 class="display-4 fw-bold mb-2">📘 SSC Tracker</h1>
-      <p class="lead mb-0">Master Your SSC Preparation • By Advani Ji</p>
-    </header>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">📘 SSC Tracker</a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="window.location.reload()">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="marks.html">Marks Analysis</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
-    <div class="container">
-      <!-- Minimal Modern Login -->
+    <div class="container my-4">
+      <!-- Login Section -->
       <div id="loginSection" class="glass-card mx-auto" style="max-width: 400px;">
         <h4 class="mb-3 text-center">Login</h4>
         <div class="mb-3">
@@ -100,13 +115,16 @@
             placeholder="Your Password"
           />
         </div>
-        <button onclick="login()" class="btn btn-primary btn-lg w-100">🔑 Login</button>
+        <button onclick="login()" class="btn btn-light btn-lg w-100">
+          🔑 Login
+        </button>
       </div>
 
       <!-- Data Entry Form -->
       <div id="dataForm" class="glass-card" style="display: none;">
+        <h5 class="mb-3">Enter Test Data</h5>
         <div class="row g-3 mb-3">
-          <!-- Test ID, Test Date, Provider & Test Type -->
+          <!-- Test ID, Date, Provider & Test Type -->
           <div class="col-md-3">
             <input
               type="text"
@@ -120,7 +138,6 @@
               type="date"
               id="testDate"
               class="form-control form-control-lg"
-              value=""
             />
           </div>
           <div class="col-md-3">
@@ -139,8 +156,7 @@
             </select>
           </div>
         </div>
-
-        <!-- Additional field for Notes -->
+        <!-- Notes -->
         <div class="mb-3">
           <input
             type="text"
@@ -151,10 +167,10 @@
         </div>
 
         <!-- Full Length Test Sections -->
-        <div id="fullTestSections" class="row g-3" style="display: none;">
+        <div id="fullTestSections" class="row g-3 mb-3" style="display: none;">
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
-              <label class="text-muted small mb-1">Maths</label>
+              <label class="small text-muted">Maths</label>
               <input
                 type="number"
                 class="form-control full-section"
@@ -166,7 +182,7 @@
           </div>
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
-              <label class="text-muted small mb-1">English</label>
+              <label class="small text-muted">English</label>
               <input
                 type="number"
                 class="form-control full-section"
@@ -178,7 +194,7 @@
           </div>
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
-              <label class="text-muted small mb-1">Reasoning</label>
+              <label class="small text-muted">Reasoning</label>
               <input
                 type="number"
                 class="form-control full-section"
@@ -190,7 +206,7 @@
           </div>
           <div class="col-md-3">
             <div class="section-input card p-2 text-center">
-              <label class="text-muted small mb-1">GK</label>
+              <label class="small text-muted">GK</label>
               <input
                 type="number"
                 class="form-control full-section"
@@ -203,7 +219,7 @@
         </div>
 
         <!-- Sectional Test Input -->
-        <div id="sectionalTest" class="row g-3" style="display: none;">
+        <div id="sectionalTest" class="row g-3 mb-3" style="display: none;">
           <div class="col-md-6">
             <select id="section" class="form-select form-select-lg">
               <option>Maths</option>
@@ -222,19 +238,15 @@
             />
           </div>
         </div>
-
-        <div class="row mt-3">
-          <div class="col-md-12">
-            <button id="saveBtn" onclick="submitData()" class="btn btn-success btn-lg w-100">
-              💾 Save Entry
-            </button>
-          </div>
-        </div>
+        <button id="saveBtn" onclick="submitData()" class="btn btn-success btn-lg w-100">
+          💾 Save Entry
+        </button>
       </div>
 
       <!-- Analysis Section -->
-      <div class="glass-card">
-        <!-- Provider Filter for Analysis -->
+      <div class="glass-card" id="analysisSectionContainer" style="display: none;">
+        <h5 class="mb-3">Analysis Dashboard</h5>
+        <!-- Provider Filter -->
         <div class="row mb-3">
           <div class="col-md-4">
             <select id="analysisProvider" class="form-select">
@@ -247,37 +259,38 @@
             </select>
           </div>
         </div>
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <div class="card p-3">
-              <h5 class="text-center">Overall Progress</h5>
+        <!-- 2x2 Grid for Analysis Tiles -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="card analysis-tile p-3">
+              <h6 class="text-center">Overall Progress</h6>
               <canvas id="progressChart"></canvas>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card p-3">
-              <h5 class="text-center">Section Performance</h5>
+          <div class="col-md-6 mb-3">
+            <div class="card analysis-tile p-3">
+              <h6 class="text-center">Section Performance</h6>
               <canvas id="sectionChart"></canvas>
             </div>
           </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <select id="analysisSection" class="form-select">
-              <option value="Maths">Maths</option>
-              <option value="English">English</option>
-              <option value="Reasoning">Reasoning</option>
-              <option value="GK">GK</option>
-            </select>
-          </div>
-          <div class="col-md-8">
-            <div class="card p-3">
-              <h5 class="text-center">Section Time-Series</h5>
+          <div class="col-md-6 mb-3">
+            <div class="card analysis-tile p-3">
+              <h6 class="text-center">Section Time-Series</h6>
               <canvas id="sectionTimeSeriesChart"></canvas>
             </div>
           </div>
+          <div class="col-md-6 mb-3">
+            <div class="card analysis-tile p-3">
+              <h6 class="text-center">Text-Based Marks Analysis</h6>
+              <!-- For text analysis, we show a summary and a link to detailed view -->
+              <div id="textAnalysis" class="mt-2"></div>
+              <div class="text-center mt-2">
+                <a href="marks.html" class="btn btn-outline-primary btn-sm">View Full Analysis</a>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="text-center mt-4">
+        <div class="text-center mt-3">
           <button onclick="generatePDF()" class="btn btn-danger btn-lg">
             📄 Generate Detailed PDF Report
           </button>
@@ -285,22 +298,21 @@
       </div>
     </div>
 
-    <!-- Required Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Required Libraries for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
+    <!-- Main Script -->
     <script>
-      // Configuration using your provided details
+      // Constants for Google Sheet and App Script URLs
       const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
-      const APP_SCRIPT_URL =
-        'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
-
+      const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
+      
       let currentUser = null;
       let progressChart, sectionChart, sectionTimeSeriesChart;
       let overallDataGlobal = [];
 
-      // Set default date to today for testDate input
+      // Set today's date as default
       document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
 
       async function login() {
@@ -313,6 +325,7 @@
             currentUser = username;
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('dataForm').style.display = 'block';
+            document.getElementById('analysisSectionContainer').style.display = 'block';
             loadCharts();
             setupFormToggle();
           } else {
@@ -333,7 +346,6 @@
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
 
-      // Spinner functions and disable Save button
       function showSpinner() {
         document.getElementById('spinnerOverlay').classList.add('active');
         document.getElementById('saveBtn').disabled = true;
@@ -416,7 +428,7 @@
           let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
             .then((r) => r.json());
           
-          // Apply provider filter from analysisProvider dropdown if not "All"
+          // Filter data based on selected provider
           const analysisProv = document.getElementById('analysisProvider').value;
           if (analysisProv !== 'All') {
             data = data.filter(entry => entry.Provider === analysisProv);
@@ -426,9 +438,10 @@
             .filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
             .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
 
+          // Destroy previous charts if they exist
           [progressChart, sectionChart, sectionTimeSeriesChart].forEach(chart => chart?.destroy());
 
-          // Overall Progress Chart with time scale
+          // Overall Progress Chart
           progressChart = new Chart(document.getElementById('progressChart'), {
             type: 'line',
             data: {
@@ -439,7 +452,7 @@
                   y: Number(entry.Marks),
                   note: entry.Notes || ''
                 })),
-                borderColor: '#3949ab',
+                borderColor: varColor('--secondary-color'),
                 tension: 0.2,
                 fill: false,
                 pointRadius: 5
@@ -473,7 +486,7 @@
             }
           });
 
-          // Section Performance Chart (Average per section)
+          // Section Performance Chart (Average Marks per Section)
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             const sectionData = data.filter(entry => entry.Section === section);
@@ -487,7 +500,7 @@
               datasets: [{
                 label: 'Average Marks',
                 data: sectionAverages,
-                backgroundColor: '#e64a19'
+                backgroundColor: varColor('--accent-color')
               }]
             },
             options: {
@@ -499,8 +512,8 @@
             }
           });
 
-          // Section Time-Series Chart for selected section
-          const selectedSection = document.getElementById('analysisSection').value;
+          // Section Time-Series Chart
+          const selectedSection = document.getElementById('analysisSection') ? document.getElementById('analysisSection').value : 'Maths';
           const sectionData = data.filter(entry => entry.Section === selectedSection)
             .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
           sectionTimeSeriesChart = new Chart(document.getElementById('sectionTimeSeriesChart'), {
@@ -513,7 +526,7 @@
                   y: Number(entry.Marks),
                   note: entry.Notes || ''
                 })),
-                borderColor: '#e64a19',
+                borderColor: varColor('--accent-color'),
                 tension: 0.2,
                 fill: false,
                 pointRadius: 5
@@ -546,13 +559,27 @@
               }
             }
           });
+
+          // Text-based analysis for marks summary
+          const totalTests = overallDataGlobal.length;
+          const overallAvg = overallDataGlobal.length 
+            ? (overallDataGlobal.reduce((sum, entry) => sum + Number(entry.Marks), 0) / overallDataGlobal.length).toFixed(2)
+            : 'N/A';
+          document.getElementById('textAnalysis').innerHTML = `
+            <p><strong>Total Tests:</strong> ${totalTests}</p>
+            <p><strong>Overall Average:</strong> ${overallAvg}</p>
+          `;
         } catch (error) {
           console.error('Error loading charts:', error);
         }
       }
 
-      // Re-load charts when the analysis filters change
-      document.getElementById('analysisSection').addEventListener('change', loadCharts);
+      // Helper function to get CSS variable colors
+      function varColor(variable) {
+        return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+      }
+
+      // Re-load charts when filters change
       document.getElementById('analysisProvider').addEventListener('change', loadCharts);
 
       async function generatePDF() {
@@ -560,20 +587,21 @@
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
 
-        // Header with centered text and filter details
-        doc.setFontSize(22);
+        // Modern styled header
+        doc.setFillColor(26, 35, 126);
+        doc.rect(0, 0, pageWidth, 30, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(20);
         const headerText = 'SSC Tracker Report';
         doc.text(headerText, (pageWidth - doc.getTextWidth(headerText)) / 2, 20);
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
         const userText = `User: ${currentUser}`;
         const dateText = `Generated: ${new Date().toLocaleString()}`;
-        const provFilter = document.getElementById('analysisProvider').value;
-        const filterText = provFilter === 'All' ? 'All Providers' : `Provider: ${provFilter}`;
-        doc.text(userText, (pageWidth - doc.getTextWidth(userText)) / 2, 30);
-        doc.text(dateText, (pageWidth - doc.getTextWidth(dateText)) / 2, 38);
-        doc.text(filterText, (pageWidth - doc.getTextWidth(filterText)) / 2, 46);
+        doc.text(userText, 15, 40);
+        doc.text(dateText, 15, 48);
 
-        // Add charts with improved quality (using scale: 3 for HD images)
+        // Add charts
         let yPos = 55;
         const chartIds = ['progressChart', 'sectionChart', 'sectionTimeSeriesChart'];
         for (const chartId of chartIds) {
@@ -582,19 +610,19 @@
           doc.addImage(imgData, 'PNG', 15, yPos, pageWidth - 30, 90);
           yPos += 100;
         }
-
-        // Generate a summary table of key metrics from overall data
+        
+        // Summary Section
         const totalTests = overallDataGlobal.length;
         const overallAvg = overallDataGlobal.length 
           ? (overallDataGlobal.reduce((sum, entry) => sum + Number(entry.Marks), 0) / overallDataGlobal.length).toFixed(2)
           : 'N/A';
-        const summaryText = `Total Tests: ${totalTests}\nOverall Average Marks: ${overallAvg}`;
         doc.setFontSize(14);
         doc.text('Summary', 15, yPos + 10);
         doc.setFontSize(12);
-        doc.text(summaryText, 15, yPos + 20);
+        doc.text(`Total Tests: ${totalTests}`, 15, yPos + 20);
+        doc.text(`Overall Average Marks: ${overallAvg}`, 15, yPos + 30);
 
-        // Centered Footer
+        // Footer
         doc.setFontSize(10);
         const footerText = 'Created with SSC Tracker - By Advani Ji';
         doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, doc.internal.pageSize.getHeight() - 10);
