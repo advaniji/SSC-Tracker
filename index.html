@@ -1,691 +1,782 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SSC Tracker - Your Preparation Companion</title>
-    <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Chart.js and Time Adapter -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
-    <!-- jsPDF, jsPDF-AutoTable and html2canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <!-- Custom Styles -->
-    <style>
-      :root {
-        --primary-color: #1a237e;
-        --secondary-color: #3949ab;
-        --accent-color: #e64a19;
-        --light-bg: #f5f7fa;
-        --card-bg: rgba(255, 255, 255, 0.85);
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SSC Tracker - Your Preparation Companion</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Chart.js and Time Adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+  <!-- jsPDF, jsPDF-AutoTable and html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <!-- Custom Styles -->
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --secondary-color: #50e3c2;
+      --accent-color: #f5a623;
+      --light-bg: #f0f4f8;
+      --card-bg: rgba(255, 255, 255, 0.95);
+    }
+    body {
+      background: linear-gradient(135deg, var(--light-bg), #ffffff);
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+    }
+    .navbar {
+      background: var(--primary-color);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand, .nav-link {
+      color: #fff !important;
+    }
+    .navbar-brand:hover, .nav-link:hover {
+      opacity: 0.8;
+    }
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #e9f0f8, #ffffff);
+    }
+    .login-card {
+      background: var(--card-bg);
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+      transition: transform 0.3s ease;
+    }
+    .login-card:hover {
+      transform: translateY(-5px);
+    }
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+    #spinnerOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    #spinnerOverlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .analysis-tile {
+      min-height: 300px;
+    }
+    button:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+      transition: all 0.2s ease;
+    }
+    @media (max-width: 576px) {
+      .login-card, .glass-card {
+        margin: 1rem;
+        padding: 1rem;
       }
-      body {
-        background: linear-gradient(135deg, #f5f7fa, #e0eafc);
-        font-family: 'Poppins', sans-serif;
-      }
-      .navbar {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      }
-      .navbar-brand, .nav-link {
-        color: #fff !important;
-      }
-      .navbar-brand:hover {
-        text-decoration: none;
-      }
-      .login-container {
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: linear-gradient(135deg, #e0eafc, #cfdef3);
-      }
-      .login-card {
-        background: var(--card-bg);
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        padding: 2rem;
-        max-width: 400px;
-        width: 100%;
-      }
-      .glass-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        transition: transform 0.2s ease;
-      }
-      .glass-card:hover {
-        transform: translateY(-2px);
-      }
-      #spinnerOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-      }
-      #spinnerOverlay.active {
-        opacity: 1;
-        pointer-events: all;
-      }
-      .analysis-tile {
-        min-height: 300px;
-      }
-      @media (max-width: 576px) {
-        .login-card, .glass-card {
-          margin: 1rem;
-          padding: 1rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Spinner Overlay -->
-    <div id="spinnerOverlay">
-      <div class="spinner-border text-light" role="status">
-        <span class="visually-hidden">Loading...</span>
+    }
+  </style>
+</head>
+<body>
+  <!-- Spinner Overlay -->
+  <div id="spinnerOverlay">
+    <div class="spinner-border text-light" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <div class="mt-2" id="spinnerText" style="color: var(--primary-color); font-weight: bold;">Loading...</div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="https://advaniji.github.io/SSC-Tracker/" target="_blank">📘 SSC Tracker</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showDashboard()">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="marks.html">Marks Analysis</a>
+          </li>
+        </ul>
       </div>
     </div>
+  </nav>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-        <a class="navbar-brand fw-bold" href="https://advaniji.github.io/SSC-Tracker/" target="_blank">📘 SSC Tracker</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link" href="#" onclick="showDashboard()">Dashboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="marks.html">Marks Analysis</a>
-            </li>
-          </ul>
-        </div>
+  <!-- Login Section -->
+  <div id="loginContainer" class="login-container">
+    <div class="login-card shadow">
+      <h4 class="mb-4 text-center">Welcome to SSC Tracker</h4>
+      <div class="mb-3">
+        <label for="username" class="form-label">Select User</label>
+        <select id="username" class="form-select form-select-lg">
+          <option>Advani</option>
+          <option>Siamaq</option>
+          <option>Souvik</option>
+          <option>Other</option>
+        </select>
       </div>
-    </nav>
+      <div class="mb-4">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" class="form-control form-control-lg" placeholder="Your Password" />
+      </div>
+      <button id="loginBtn" onclick="login()" class="btn btn-primary btn-lg w-100">🔑 Login</button>
+    </div>
+  </div>
 
-    <!-- Login Section -->
-    <div id="loginContainer" class="login-container">
-      <div class="login-card shadow">
-        <h4 class="mb-4 text-center">Welcome to SSC Tracker</h4>
-        <div class="mb-3">
-          <label for="username" class="form-label">Select User</label>
-          <select id="username" class="form-select form-select-lg">
-            <option>Advani</option>
-            <option>Siamaq</option>
-            <option>Souvik</option>
-            <option>Other</option>
+  <!-- Main Content -->
+  <div id="mainContent" class="container my-4" style="display:none;">
+    <!-- Data Entry Form -->
+    <div id="dataForm" class="glass-card">
+      <h5 class="mb-3">Enter Test Data</h5>
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <input type="text" id="testID" class="form-control form-control-lg" placeholder="Test ID (optional)" />
+        </div>
+        <div class="col-md-3">
+          <input type="date" id="testDate" class="form-control form-control-lg" />
+        </div>
+        <div class="col-md-3">
+          <select id="provider" class="form-select form-select-lg">
+            <option value="Oliveboard">Oliveboard</option>
+            <option value="RBE">RBE</option>
+            <option value="Testbook">Testbook</option>
+            <option value="The Pundits">The Pundits</option>
+            <option value="Other">Other</option>
           </select>
         </div>
-        <div class="mb-4">
-          <label for="password" class="form-label">Password</label>
-          <input type="password" id="password" class="form-control form-control-lg" placeholder="Your Password" />
+        <div class="col-md-3">
+          <select id="testType" class="form-select form-select-lg">
+            <option value="full">Full Length Test (200)</option>
+            <option value="sectional">Sectional Test (50)</option>
+          </select>
         </div>
-        <button id="loginBtn" onclick="login()" class="btn btn-primary btn-lg w-100">🔑 Login</button>
       </div>
+      <div class="mb-3">
+        <input type="text" id="notes" class="form-control form-control-lg" placeholder="Notes (optional)" />
+      </div>
+      <!-- Full Length Test Sections -->
+      <div id="fullTestSections" class="row g-3 mb-3" style="display:none;">
+        <div class="col-md-3">
+          <div class="section-input card p-2 text-center">
+            <label class="small text-muted">Maths</label>
+            <input type="number" id="maths" class="form-control full-section" placeholder="/50" max="50" />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="section-input card p-2 text-center">
+            <label class="small text-muted">English</label>
+            <input type="number" id="english" class="form-control full-section" placeholder="/50" max="50" />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="section-input card p-2 text-center">
+            <label class="small text-muted">Reasoning</label>
+            <input type="number" id="reasoning" class="form-control full-section" placeholder="/50" max="50" />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="section-input card p-2 text-center">
+            <label class="small text-muted">GK</label>
+            <input type="number" id="gk" class="form-control full-section" placeholder="/50" max="50" />
+          </div>
+        </div>
+      </div>
+      <!-- Sectional Test Input -->
+      <div id="sectionalTest" class="row g-3 mb-3" style="display:none;">
+        <div class="col-md-6">
+          <select id="section" class="form-select form-select-lg">
+            <option>Maths</option>
+            <option>English</option>
+            <option>Reasoning</option>
+            <option>GK</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <input type="number" id="sectionMarks" class="form-control form-control-lg" placeholder="Marks out of 50" max="50" />
+        </div>
+      </div>
+      <button id="saveBtn" onclick="submitData()" class="btn btn-success btn-lg w-100">💾 Save Entry</button>
     </div>
 
-    <!-- Main Content -->
-    <div id="mainContent" class="container my-4" style="display:none;">
-      <!-- Data Entry Form -->
-      <div id="dataForm" class="glass-card">
-        <h5 class="mb-3">Enter Test Data</h5>
-        <div class="row g-3 mb-3">
-          <div class="col-md-3">
-            <input type="text" id="testID" class="form-control form-control-lg" placeholder="Test ID" />
-          </div>
-          <div class="col-md-3">
-            <input type="date" id="testDate" class="form-control form-control-lg" />
-          </div>
-          <div class="col-md-3">
-            <select id="provider" class="form-select form-select-lg">
-              <option value="Oliveboard">Oliveboard</option>
-              <option value="RBE">RBE</option>
-              <option value="Testbook">Testbook</option>
-              <option value="The Pundits">The Pundits</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <select id="testType" class="form-select form-select-lg">
-              <option value="full">Full Length Test (200)</option>
-              <option value="sectional">Sectional Test (50)</option>
-            </select>
-          </div>
-        </div>
-        <div class="mb-3">
-          <input type="text" id="notes" class="form-control form-control-lg" placeholder="Notes (optional)" />
-        </div>
-        <!-- Full Length Test Sections -->
-        <div id="fullTestSections" class="row g-3 mb-3" style="display:none;">
-          <div class="col-md-3">
-            <div class="section-input card p-2 text-center">
-              <label class="small text-muted">Maths</label>
-              <input type="number" class="form-control full-section" data-section="Maths" max="50" placeholder="/50" />
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="section-input card p-2 text-center">
-              <label class="small text-muted">English</label>
-              <input type="number" class="form-control full-section" data-section="English" max="50" placeholder="/50" />
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="section-input card p-2 text-center">
-              <label class="small text-muted">Reasoning</label>
-              <input type="number" class="form-control full-section" data-section="Reasoning" max="50" placeholder="/50" />
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="section-input card p-2 text-center">
-              <label class="small text-muted">GK</label>
-              <input type="number" class="form-control full-section" data-section="GK" max="50" placeholder="/50" />
-            </div>
-          </div>
-        </div>
-        <!-- Sectional Test Input -->
-        <div id="sectionalTest" class="row g-3 mb-3" style="display:none;">
-          <div class="col-md-6">
-            <select id="section" class="form-select form-select-lg">
-              <option>Maths</option>
-              <option>English</option>
-              <option>Reasoning</option>
-              <option>GK</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <input type="number" id="sectionMarks" class="form-control form-control-lg" placeholder="Marks out of 50" max="50" />
-          </div>
-        </div>
-        <button id="saveBtn" onclick="submitData()" class="btn btn-success btn-lg w-100">💾 Save Entry</button>
-      </div>
-
-      <!-- Analysis Dashboard -->
-      <div id="analysisSectionContainer" class="glass-card">
-        <h5 class="mb-3">Analysis Dashboard</h5>
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <select id="analysisProvider" class="form-select">
-              <option value="All">All Providers</option>
-              <option value="Oliveboard">Oliveboard</option>
-              <option value="RBE">RBE</option>
-              <option value="Testbook">Testbook</option>
-              <option value="The Pundits">The Pundits</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-        <!-- 2x2 Grid for Analysis Tiles -->
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <div class="card analysis-tile p-3">
-              <h6 class="text-center">Overall Progress</h6>
-              <canvas id="progressChart"></canvas>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="card analysis-tile p-3">
-              <h6 class="text-center">Section Performance</h6>
-              <canvas id="sectionChart"></canvas>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="card analysis-tile p-3">
-              <h6 class="text-center">Datewise Progress</h6>
-              <canvas id="datewiseProgressChart"></canvas>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="card analysis-tile p-3">
-              <h6 class="text-center">Text-Based Marks Analysis</h6>
-              <div id="textAnalysis" class="mt-2"></div>
-              <div class="text-center mt-2">
-                <a href="marks.html" class="btn btn-outline-primary btn-sm">View Full Analysis</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="text-center mt-3">
-          <button onclick="generatePDF()" class="btn btn-danger btn-lg">📄 Generate Detailed PDF Report</button>
+    <!-- Analysis Dashboard -->
+    <div id="analysisSectionContainer" class="glass-card">
+      <h5 class="mb-3">Analysis Dashboard</h5>
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <select id="analysisProvider" class="form-select">
+            <option value="All">All Providers</option>
+            <option value="Oliveboard">Oliveboard</option>
+            <option value="RBE">RBE</option>
+            <option value="Testbook">Testbook</option>
+            <option value="The Pundits">The Pundits</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
       </div>
+      <!-- 2x2 Grid for Analysis Tiles -->
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <div class="card analysis-tile p-3">
+            <h6 class="text-center">Overall Progress</h6>
+            <canvas id="progressChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card analysis-tile p-3">
+            <h6 class="text-center">Section Performance</h6>
+            <canvas id="sectionChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card analysis-tile p-3">
+            <h6 class="text-center">Datewise Progress</h6>
+            <canvas id="datewiseProgressChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card analysis-tile p-3">
+            <h6 class="text-center">Combined English Analysis</h6>
+            <div id="englishAnalysis" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-3">
+        <button onclick="generatePDF()" class="btn btn-danger btn-lg">📄 Generate Detailed PDF Report</button>
+      </div>
+      <div id="textAnalysis" class="mt-3"></div>
     </div>
+  </div>
 
-    <!-- Main Script -->
-    <script>
-      // Constants for Google Sheet and App Script URLs
-      const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
-      const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
-      
-      let currentUser = localStorage.getItem('currentUser') || null;
-      let progressChart, sectionChart, datewiseProgressChart;
-      let overallDataGlobal = [];
-      
-      // Set today's date as default for testDate
-      document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
+  <!-- Main Script -->
+  <script>
+    // Constants for Google Sheet and App Script URLs
+    const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
+    
+    let currentUser = localStorage.getItem('currentUser') || null;
+    let progressChart, sectionChart, datewiseProgressChart;
+    
+    // Set today's date as default for testDate
+    document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
 
-      // Allow login via Enter key
-      document.getElementById('loginContainer').addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-          login();
+    // --- Descriptive Test ID Generation ---
+    // Mapping based on provider and test type.
+    const prefixMapping = {
+      full: {
+        "Oliveboard": "OBFT",
+        "RBE": "RBEFT",
+        "Testbook": "TBFT",
+        "The Pundits": "TPFT",
+        "Other": "OFT"
+      },
+      sectional: {
+        "Oliveboard": "OBSEC",
+        "RBE": "RBESEC",
+        "Testbook": "TBSEC",
+        "The Pundits": "TPSEC",
+        "Other": "OTHSEC"
+      }
+    };
+
+    function generateDescriptiveTestID(provider, testType) {
+      const mapping = prefixMapping[testType] || {};
+      const prefix = mapping[provider] || 'TEST';
+      let counter = Number(localStorage.getItem(prefix + '_counter')) || 0;
+      counter++;
+      localStorage.setItem(prefix + '_counter', counter);
+      return prefix + counter;
+    }
+
+    // --- Spinner ---
+    function showSpinner(message = "Loading...") {
+      document.getElementById('spinnerText').innerText = message;
+      document.getElementById('spinnerOverlay').classList.add('active');
+      document.getElementById('saveBtn').disabled = true;
+    }
+    function hideSpinner() {
+      document.getElementById('spinnerOverlay').classList.remove('active');
+      document.getElementById('saveBtn').disabled = false;
+    }
+
+    // --- Input Validation ---
+    function validateInput() {
+      const testDate = document.getElementById('testDate').value;
+      if (!testDate) {
+        alert("Test Date is required.");
+        return false;
+      }
+      const testType = document.getElementById('testType').value;
+      if (testType === 'full') {
+        ['maths','english','reasoning','gk'].forEach(id => {
+          const field = document.getElementById(id);
+          if (field.value.trim() === "") field.value = "0";
+        });
+      } else {
+        const sectionMarks = document.getElementById('sectionMarks').value.trim();
+        if (!sectionMarks) {
+          alert("Sectional test marks are required.");
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // --- Create Payload ---
+    function createPayload() {
+      let testID = document.getElementById('testID').value.trim();
+      const provider = document.getElementById('provider').value;
+      const testType = document.getElementById('testType').value;
+      if (!testID) {
+        testID = generateDescriptiveTestID(provider, testType);
+      }
+      const testDate = document.getElementById('testDate').value;
+      const notes = document.getElementById('notes').value.trim();
+      let payload = {};
+
+      if (testType === 'full') {
+        const subjects = {
+          Maths: Number(document.getElementById('maths').value),
+          English: Number(document.getElementById('english').value),
+          Reasoning: Number(document.getElementById('reasoning').value),
+          GK: Number(document.getElementById('gk').value)
+        };
+        const overall = subjects.Maths + subjects.English + subjects.Reasoning + subjects.GK;
+        payload = {
+          testID,
+          testDate,
+          provider,
+          testType: 'full',
+          section: 'Overall',
+          marks: overall,
+          notes,
+          breakdown: JSON.stringify(subjects)
+        };
+      } else {
+        payload = {
+          testID,
+          testDate,
+          provider,
+          testType: 'sectional',
+          section: document.getElementById('section').value,
+          marks: document.getElementById('sectionMarks').value,
+          notes
+        };
+      }
+      return payload;
+    }
+
+    // --- Submit Data ---
+    async function submitData() {
+      if (!validateInput()) return;
+      showSpinner("Saving Data...");
+      const payload = createPayload();
+      try {
+        const response = await fetch(APP_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ username: currentUser, ...payload })
+        });
+        if (response.ok) {
+          alert('✅ Data saved successfully!');
+          loadCharts();
+        } else {
+          throw new Error("Server responded with an error.");
+        }
+      } catch (error) {
+        console.error('Submission error:', error);
+        alert(`❌ Error: ${error.message}`);
+      } finally {
+        hideSpinner();
+      }
+    }
+
+    // --- Load Charts & Analysis ---
+    async function loadCharts() {
+      showSpinner("Loading Charts...");
+      try {
+        let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
+                          .then(r => r.json());
+        const analysisProv = document.getElementById('analysisProvider').value;
+        if (analysisProv !== 'All') {
+          data = data.filter(entry => entry.Provider === analysisProv);
+        }
+        // Use only Overall (for full tests) and sectional entries for progress charts.
+        const overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
+                                       .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
+
+        [progressChart, sectionChart, datewiseProgressChart].forEach(chart => chart?.destroy());
+
+        // Overall Progress Chart
+        progressChart = new Chart(document.getElementById('progressChart'), {
+          type: 'line',
+          data: {
+            datasets: [{
+              label: 'Overall Marks',
+              data: overallDataGlobal.map(entry => ({
+                x: new Date(entry.testDate || entry.Date),
+                y: Number(entry.Marks),
+                note: entry.Notes || ''
+              })),
+              borderColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim(),
+              tension: 0.2,
+              fill: false,
+              pointRadius: 5
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: { display: true, text: 'Progress Over Time' },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const note = overallDataGlobal[context.dataIndex].Notes;
+                    return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
+                                : `${context.dataset.label}: ${context.parsed.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'time',
+                time: { unit: 'day', tooltipFormat: 'PPpp' },
+                title: { display: true, text: 'Date' }
+              },
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Marks' }
+              }
+            }
+          }
+        });
+
+        // Section Performance Chart
+        const sections = ['Maths', 'English', 'Reasoning', 'GK'];
+        const sectionAverages = sections.map(section => {
+          const sectionData = data.filter(entry => entry.Section === section);
+          const totalMarks = sectionData.reduce((sum, entry) => sum + Number(entry.Marks), 0);
+          return sectionData.length ? (totalMarks / sectionData.length).toFixed(2) : 0;
+        });
+        sectionChart = new Chart(document.getElementById('sectionChart'), {
+          type: 'bar',
+          data: {
+            labels: sections,
+            datasets: [{
+              label: 'Average Marks',
+              data: sectionAverages,
+              backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { title: { display: true, text: 'Section Performance' } },
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: 'Average Marks' } }
+            }
+          }
+        });
+
+        // Datewise Progress for default subject (e.g. Maths)
+        const selectedSection = 'Maths';
+        const datewiseData = data.filter(entry => entry.Section === selectedSection)
+                                 .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
+        datewiseProgressChart = new Chart(document.getElementById('datewiseProgressChart'), {
+          type: 'line',
+          data: {
+            datasets: [{
+              label: `${selectedSection} Marks`,
+              data: datewiseData.map(entry => ({
+                x: new Date(entry.testDate || entry.Date),
+                y: Number(entry.Marks),
+                note: entry.Notes || ''
+              })),
+              borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(),
+              tension: 0.2,
+              fill: false,
+              pointRadius: 5
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: { display: true, text: `Datewise Progress for ${selectedSection}` },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const note = datewiseData[context.dataIndex].Notes;
+                    return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
+                                : `${context.dataset.label}: ${context.parsed.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'time',
+                time: { unit: 'day', tooltipFormat: 'PPpp' },
+                title: { display: true, text: 'Date' }
+              },
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Marks' }
+              }
+            }
+          }
+        });
+
+        // Combined English Analysis:
+        let englishMarks = [];
+        data.filter(entry => entry.TestType === 'sectional' && entry.Section === 'English')
+            .forEach(entry => englishMarks.push(Number(entry.Marks)));
+        data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall')
+            .forEach(entry => {
+              if (entry.breakdown) {
+                try {
+                  const breakdown = JSON.parse(entry.breakdown);
+                  if (breakdown.English !== undefined) {
+                    englishMarks.push(Number(breakdown.English));
+                  }
+                } catch (error) {
+                  console.error('Error parsing breakdown for entry:', entry.TestID, error);
+                }
+              }
+            });
+        const totalEnglish = englishMarks.reduce((sum, mark) => sum + mark, 0);
+        const avgEnglish = englishMarks.length ? (totalEnglish / englishMarks.length).toFixed(2) : 'N/A';
+        document.getElementById('englishAnalysis').innerHTML = `
+          <p><strong>Combined English Average:</strong> ${avgEnglish}</p>
+          <p><strong>Total English Tests:</strong> ${englishMarks.length}</p>
+        `;
+
+        // Overall Average (using Overall and sectional tests)
+        const overallMarks = overallDataGlobal.map(entry => {
+          return Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks);
+        });
+        const avgMarksOutOf200 = overallMarks.length ? (overallMarks.reduce((sum, m) => sum + m, 0) / overallMarks.length).toFixed(2) : 'N/A';
+        document.getElementById('textAnalysis').innerHTML = `
+          <p><strong>Total Tests:</strong> ${data.length}</p>
+          <p><strong>Overall Average (marks out of 200):</strong> ${avgMarksOutOf200}</p>
+        `;
+      } catch (error) {
+        console.error('Error loading charts:', error);
+        alert("❌ Error loading charts. Please try again.");
+      } finally {
+        hideSpinner();
+      }
+    }
+
+    // --- Generate PDF Report ---
+    async function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'pt', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // --- Cover Page ---
+      doc.setFillColor(74, 144, 226);
+      doc.rect(0, 0, pageWidth, 100, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(30);
+      doc.text('SSC Tracker Report', pageWidth / 2, 50, { align: 'center' });
+      doc.setFontSize(18);
+      doc.text('Elevate Your Preparation', pageWidth / 2, 80, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.text(`User: ${currentUser}`, 40, 120);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 140);
+      doc.line(40, 150, pageWidth - 40, 150);
+      doc.addPage();
+
+      // --- Charts Section ---
+      let yPos = 40;
+      doc.setFontSize(22);
+      doc.text('Charts Overview', 40, yPos);
+      yPos += 20;
+      const chartIds = ['progressChart', 'sectionChart', 'datewiseProgressChart'];
+      for (const chartId of chartIds) {
+        const canvas = document.getElementById(chartId);
+        const imgData = await html2canvas(canvas, { scale: 3, useCORS: true }).then(c => c.toDataURL('image/jpeg', 1.0));
+        doc.addImage(imgData, 'JPEG', 40, yPos, pageWidth - 80, 150, undefined, 'FAST');
+        yPos += 170;
+        if (yPos > pageHeight - 80) {
+          doc.addPage();
+          yPos = 40;
+        }
+      }
+
+      // --- Detailed Data Tables ---
+      doc.addPage();
+      yPos = 40;
+      doc.setFontSize(22);
+      doc.text('Detailed Test Data', 40, yPos);
+      yPos += 20;
+      let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
+      const fullTests = [];
+      const sectionalTests = [];
+      let subjectTotals = { Maths: { marks: 0, count: 0 }, English: { marks: 0, count: 0 }, Reasoning: { marks: 0, count: 0 }, GK: { marks: 0, count: 0 } };
+      data.forEach(entry => {
+        if (entry.TestType === 'full') {
+          fullTests.push(entry);
+          if (entry.breakdown && entry.Section === 'Overall') {
+            try {
+              const breakdown = JSON.parse(entry.breakdown);
+              for (const subject in breakdown) {
+                subjectTotals[subject].marks += breakdown[subject];
+                subjectTotals[subject].count++;
+              }
+            } catch (error) {
+              console.error('Error parsing breakdown for PDF:', entry.TestID, error);
+            }
+          }
+        } else {
+          sectionalTests.push(entry);
         }
       });
+      const overallMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
+      const avgMarksOutOf200 = overallMarks.length ? (overallMarks.reduce((sum, m) => sum + m, 0) / overallMarks.length).toFixed(2) : 'N/A';
+      doc.setFontSize(14);
+      doc.text(`Total Tests: ${data.length}`, 40, yPos);
+      doc.text(`Overall Average (marks out of 200): ${avgMarksOutOf200}`, 40, yPos + 20);
+      yPos += 40;
 
-      function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        fetch('passwords.json')
-          .then(response => response.json())
-          .then(passwords => {
-            if (passwords[username] === password) {
-              currentUser = username;
-              localStorage.setItem('currentUser', currentUser);
-              document.getElementById('loginContainer').style.display = 'none';
-              document.getElementById('mainContent').style.display = 'block';
-              loadCharts();
-              setupFormToggle();
-            } else {
-              alert('🔒 Incorrect password!');
-            }
-          })
-          .catch(error => {
-            console.error('Error loading passwords:', error);
-            alert('🚨 Error loading passwords!');
-          });
-      }
-
-      function showDashboard() {
-        document.getElementById('mainContent').style.display = 'block';
-      }
-
-      function setupFormToggle() {
-        document.getElementById('testType').addEventListener('change', function () {
-          const isFullTest = this.value === 'full';
-          document.getElementById('fullTestSections').style.display = isFullTest ? 'flex' : 'none';
-          document.getElementById('sectionalTest').style.display = isFullTest ? 'none' : 'flex';
-        });
-        document.getElementById('testType').dispatchEvent(new Event('change'));
-      }
-
-      function showSpinner() {
-        document.getElementById('spinnerOverlay').classList.add('active');
-        document.getElementById('saveBtn').disabled = true;
-      }
-      function hideSpinner() {
-        document.getElementById('spinnerOverlay').classList.remove('active');
-        document.getElementById('saveBtn').disabled = false;
-      }
-
-      function submitData() {
-        showSpinner();
-        const entries = [];
-        const testID = document.getElementById('testID').value;
-        const testDate = document.getElementById('testDate').value;
-        const provider = document.getElementById('provider').value;
-        const testType = document.getElementById('testType').value;
-        const notes = document.getElementById('notes').value;
-
-        if (testType === 'full') {
-          document.querySelectorAll('.full-section').forEach((input) => {
-            entries.push({
-              testID,
-              testDate,
-              provider,
-              testType: 'full',
-              section: input.getAttribute('data-section'),
-              marks: input.value,
-              total: 50,
-              notes
-            });
-          });
-          entries.push({
-            testID,
-            testDate,
-            provider,
-            testType: 'full',
-            section: 'Overall',
-            marks: Array.from(document.querySelectorAll('.full-section')).reduce((sum, input) => sum + Number(input.value || 0), 0),
-            total: 200,
-            notes
-          });
-        } else {
-          entries.push({
-            testID,
-            testDate,
-            provider,
-            testType: 'sectional',
-            section: document.getElementById('section').value,
-            marks: document.getElementById('sectionMarks').value,
-            total: 50,
-            notes
-          });
-        }
-
-        Promise.all(
-          entries.map(entry =>
-            fetch(APP_SCRIPT_URL, {
-              method: 'POST',
-              body: JSON.stringify({ username: currentUser, ...entry })
-            })
-          )
-        )
-          .then(responses => {
-            if (responses.every(r => r.ok)) {
-              alert('✅ Data saved successfully!');
-              loadCharts();
-            }
-          })
-          .catch(error => {
-            console.error('Submission error:', error);
-            alert(`❌ Error: ${error.message}`);
-          })
-          .finally(() => hideSpinner());
-      }
-
-      async function loadCharts() {
-        try {
-          let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
-          const analysisProv = document.getElementById('analysisProvider').value;
-          if (analysisProv !== 'All') {
-            data = data.filter(entry => entry.Provider === analysisProv);
-          }
-          overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
-                                   .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
-
-          [progressChart, sectionChart, datewiseProgressChart].forEach(chart => chart?.destroy());
-
-          progressChart = new Chart(document.getElementById('progressChart'), {
-            type: 'line',
-            data: {
-              datasets: [{
-                label: 'Overall Marks',
-                data: overallDataGlobal.map(entry => ({
-                  x: new Date(entry.testDate || entry.Date),
-                  y: Number(entry.Marks),
-                  note: entry.Notes || ''
-                })),
-                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim(),
-                tension: 0.2,
-                fill: false,
-                pointRadius: 5
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                title: { display: true, text: 'Progress Over Time' },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      const note = overallDataGlobal[context.dataIndex].Notes;
-                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
-                                  : `${context.dataset.label}: ${context.parsed.y}`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  type: 'time',
-                  time: { unit: 'day', tooltipFormat: 'PPpp' },
-                  title: { display: true, text: 'Date' }
-                },
-                y: {
-                  beginAtZero: true,
-                  title: { display: true, text: 'Marks' }
-                }
-              }
-            }
-          });
-
-          const sections = ['Maths', 'English', 'Reasoning', 'GK'];
-          const sectionAverages = sections.map(section => {
-            const sectionData = data.filter(entry => entry.Section === section);
-            const totalMarks = sectionData.reduce((sum, entry) => sum + Number(entry.Marks), 0);
-            return sectionData.length ? (totalMarks / sectionData.length).toFixed(2) : 0;
-          });
-          sectionChart = new Chart(document.getElementById('sectionChart'), {
-            type: 'bar',
-            data: {
-              labels: sections,
-              datasets: [{
-                label: 'Average Marks',
-                data: sectionAverages,
-                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: { title: { display: true, text: 'Section Performance' } },
-              scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Average Marks' } }
-              }
-            }
-          });
-
-          const selectedSection = document.getElementById('analysisSection') ? document.getElementById('analysisSection').value : 'Maths';
-          const datewiseData = data.filter(entry => entry.Section === selectedSection)
-            .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
-          datewiseProgressChart = new Chart(document.getElementById('datewiseProgressChart'), {
-            type: 'line',
-            data: {
-              datasets: [{
-                label: `${selectedSection} Marks`,
-                data: datewiseData.map(entry => ({
-                  x: new Date(entry.testDate || entry.Date),
-                  y: Number(entry.Marks),
-                  note: entry.Notes || ''
-                })),
-                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(),
-                tension: 0.2,
-                fill: false,
-                pointRadius: 5
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                title: { display: true, text: `Datewise Progress for ${selectedSection}` },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      const note = datewiseData[context.dataIndex].Notes;
-                      return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
-                                  : `${context.dataset.label}: ${context.parsed.y}`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  type: 'time',
-                  time: { unit: 'day', tooltipFormat: 'PPpp' },
-                  title: { display: true, text: 'Date' }
-                },
-                y: {
-                  beginAtZero: true,
-                  title: { display: true, text: 'Marks' }
-                }
-              }
-            }
-          });
-
-          // Calculate overall average marks (convert sectional tests by multiplying marks by 4 to scale to 200)
-          const convertedMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
-          const avgMarksOutOf200 = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
-
-          document.getElementById('textAnalysis').innerHTML = `
-            <p><strong>Total Tests:</strong> ${data.length}</p>
-            <p><strong>Overall Average (marks out of 200):</strong> ${avgMarksOutOf200}</p>
-          `;
-        } catch (error) {
-          console.error('Error loading charts:', error);
-        }
-      }
-
-      document.getElementById('analysisProvider').addEventListener('change', loadCharts);
-
-      async function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-
-        // --- Cover Page ---
-        doc.setFillColor(26, 35, 126);
-        doc.rect(0, 0, pageWidth, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.text('SSC Tracker Report', pageWidth / 2, 22, { align: 'center' });
-        doc.setFontSize(16);
-        doc.setFont(undefined, 'bold');
-        doc.text('CGL : one last time', pageWidth / 2, 32, { align: 'center' });
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.text(`User: ${currentUser}`, 15, 50);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 58);
-        doc.addPage();
-
-        // --- Section 1: Charts ---
-        let yPos = 15;
-        doc.setFontSize(18);
-        doc.text('Charts Overview', 15, yPos);
-        yPos += 5;
-        const chartIds = ['progressChart', 'sectionChart', 'datewiseProgressChart'];
-        for (const chartId of chartIds) {
-          const canvas = document.getElementById(chartId);
-          const imgData = await html2canvas(canvas, { scale: 5, useCORS: true }).then(c => c.toDataURL('image/jpeg', 1.0));
-          doc.addImage(imgData, 'JPEG', 15, yPos, pageWidth - 30, 90, undefined, 'NONE');
-          yPos += 95;
-          // If yPos is getting close to page bottom, add a new page
-          if (yPos > doc.internal.pageSize.getHeight() - 30) {
-            doc.addPage();
-            yPos = 15;
-          }
-        }
-
-        // --- Section 2: Detailed Data Tables ---
-        doc.addPage();
-        yPos = 15;
-        doc.setFontSize(18);
-        doc.text('Detailed Test Data', 15, yPos);
-        yPos += 5;
-        // Fetch fresh data
-        let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
-        // Separate full and sectional tests and prepare subject summary
-        const fullTests = [];
-        const sectionalTests = [];
-        let subjectTotals = { Maths: { marks: 0, count: 0 }, English: { marks: 0, count: 0 }, Reasoning: { marks: 0, count: 0 }, GK: { marks: 0, count: 0 } };
-        data.forEach(entry => {
-          if (entry.TestType === 'full') {
-            fullTests.push(entry);
-            if (entry.Section !== 'Overall' && subjectTotals[entry.Section]) {
-              subjectTotals[entry.Section].marks += Number(entry.Marks);
-              subjectTotals[entry.Section].count++;
-            }
-          } else {
-            sectionalTests.push(entry);
-          }
-        });
-        // Overall average (marks out of 200)
-        const convertedMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
-        const avgMarksOutOf200 = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
-        doc.setFontSize(14);
-        doc.text(`Total Tests: ${data.length}`, 15, yPos);
-        doc.text(`Overall Average (marks out of 200): ${avgMarksOutOf200}`, 15, yPos + 8);
-        yPos += 16;
-
-        // Full Length Tests Table
-        if(fullTests.length > 0) {
-          const fullTestData = fullTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Marks, test.Total, test.Notes]);
-          doc.autoTable({
-            startY: yPos,
-            head: [['Test ID', 'Date', 'Marks', 'Total', 'Notes']],
-            body: fullTestData,
-            theme: 'grid',
-            headStyles: { fillColor: [26, 35, 126] },
-            styles: { fontSize: 8 }
-          });
-          yPos = doc.lastAutoTable.finalY + 10;
-        }
-
-        // Sectional Tests Table
-        if(sectionalTests.length > 0) {
-          const sectionalData = sectionalTests.map(test => [
-            test.TestID || test.testID,
-            test.testDate || test.Date,
-            test.Section,
-            test.Marks,
-            test.Total,
-            test.Notes
-          ]);
-          doc.autoTable({
-            startY: yPos,
-            head: [['Test ID', 'Date', 'Section', 'Marks', 'Total', 'Notes']],
-            body: sectionalData,
-            theme: 'grid',
-            headStyles: { fillColor: [26, 35, 126] },
-            styles: { fontSize: 8 }
-          });
-          yPos = doc.lastAutoTable.finalY + 10;
-        }
-
-        // Subject-wise Analysis Table
-        const subjectRows = [];
-        for (const subject in subjectTotals) {
-          const avg = subjectTotals[subject].count ? (subjectTotals[subject].marks / subjectTotals[subject].count).toFixed(2) : 'N/A';
-          subjectRows.push([subject, subjectTotals[subject].count, avg]);
-        }
+      if (fullTests.length > 0) {
+        const fullTestData = fullTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Marks, test.Total, test.Notes]);
         doc.autoTable({
           startY: yPos,
-          head: [['Subject', 'No. of Tests', 'Average Marks']],
-          body: subjectRows,
+          head: [['Test ID', 'Date', 'Marks', 'Total', 'Notes']],
+          body: fullTestData,
           theme: 'grid',
-          headStyles: { fillColor: [26, 35, 126] },
-          styles: { fontSize: 8 }
+          headStyles: { fillColor: [74, 144, 226] },
+          styles: { fontSize: 10 }
         });
-        
-        doc.setFontSize(10);
-        const footerText = 'Created with SSC Tracker - By Advani Ji';
-        doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, doc.internal.pageSize.getHeight() - 10);
-        doc.save(`SSC_Report_${currentUser}.pdf`);
+        yPos = doc.lastAutoTable.finalY + 20;
       }
 
-      if (currentUser) {
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
-        loadCharts();
-        setupFormToggle();
+      if (sectionalTests.length > 0) {
+        const sectionalData = sectionalTests.map(test => [
+          test.TestID || test.testID,
+          test.testDate || test.Date,
+          test.Section,
+          test.Marks,
+          test.Total,
+          test.Notes
+        ]);
+        doc.autoTable({
+          startY: yPos,
+          head: [['Test ID', 'Date', 'Section', 'Marks', 'Total', 'Notes']],
+          body: sectionalData,
+          theme: 'grid',
+          headStyles: { fillColor: [74, 144, 226] },
+          styles: { fontSize: 10 }
+        });
+        yPos = doc.lastAutoTable.finalY + 20;
       }
-    </script>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+      const subjectRows = [];
+      for (const subject in subjectTotals) {
+        const avg = subjectTotals[subject].count ? (subjectTotals[subject].marks / subjectTotals[subject].count).toFixed(2) : 'N/A';
+        subjectRows.push([subject, subjectTotals[subject].count, avg]);
+      }
+      doc.autoTable({
+        startY: yPos,
+        head: [['Subject', 'No. of Tests', 'Average Marks']],
+        body: subjectRows,
+        theme: 'grid',
+        headStyles: { fillColor: [74, 144, 226] },
+        styles: { fontSize: 10 }
+      });
+      
+      doc.setFontSize(10);
+      const footerText = 'Created with SSC Tracker - By Advani Ji';
+      doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, pageHeight - 20);
+      doc.save(`SSC_Report_${currentUser}.pdf`);
+    }
+
+    // --- Login & Initialization ---
+    document.getElementById('loginContainer').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') login();
+    });
+
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      fetch('passwords.json')
+        .then(response => response.json())
+        .then(passwords => {
+          if (passwords[username] === password) {
+            currentUser = username;
+            localStorage.setItem('currentUser', currentUser);
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            loadCharts();
+            setupFormToggle();
+          } else {
+            alert('🔒 Incorrect password!');
+          }
+        })
+        .catch(error => {
+          console.error('Error loading passwords:', error);
+          alert('🚨 Error loading passwords!');
+        });
+    }
+
+    function showDashboard() {
+      document.getElementById('mainContent').style.display = 'block';
+    }
+
+    function setupFormToggle() {
+      document.getElementById('testType').addEventListener('change', function () {
+        const isFullTest = this.value === 'full';
+        document.getElementById('fullTestSections').style.display = isFullTest ? 'flex' : 'none';
+        document.getElementById('sectionalTest').style.display = isFullTest ? 'none' : 'flex';
+      });
+      document.getElementById('testType').dispatchEvent(new Event('change'));
+    }
+
+    if (currentUser) {
+      document.getElementById('loginContainer').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      loadCharts();
+      setupFormToggle();
+    }
+  </script>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>
