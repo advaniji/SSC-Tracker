@@ -4,17 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SSC Tracker - Your Preparation Companion</title>
-  <!-- Bootstrap CSS -->
+  <!-- Bootstrap CSS with defer -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Google Fonts: Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <!-- Chart.js and Time Adapter -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0" defer></script>
   <!-- jsPDF, jsPDF-AutoTable and html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" defer></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" defer></script>
   <!-- Custom Styles -->
   <style>
     :root {
@@ -126,12 +126,8 @@
       </button>
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="#" onclick="showDashboard()">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="marks.html">Marks Analysis</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="marks.html">Marks Analysis</a></li>
         </ul>
       </div>
     </div>
@@ -154,7 +150,7 @@
         <label for="password" class="form-label">Password</label>
         <input type="password" id="password" class="form-control form-control-lg" placeholder="Your Password" />
       </div>
-      <button id="loginBtn" onclick="login()" class="btn btn-primary btn-lg w-100">🔑 Login</button>
+      <button id="loginBtn" class="btn btn-primary btn-lg w-100">🔑 Login</button>
     </div>
   </div>
 
@@ -189,30 +185,30 @@
       <div class="mb-3">
         <input type="text" id="notes" class="form-control form-control-lg" placeholder="Notes (optional)" />
       </div>
-      <!-- Full Length Test Sections -->
+      <!-- Full Test Sections -->
       <div id="fullTestSections" class="row g-3 mb-3" style="display:none;">
         <div class="col-md-3">
           <div class="section-input card p-2 text-center">
             <label class="small text-muted">Maths</label>
-            <input type="number" id="maths" class="form-control full-section" placeholder="/50" max="50" />
+            <input type="number" id="maths" class="form-control full-section" placeholder="/50" min="0" max="50" />
           </div>
         </div>
         <div class="col-md-3">
           <div class="section-input card p-2 text-center">
             <label class="small text-muted">English</label>
-            <input type="number" id="english" class="form-control full-section" placeholder="/50" max="50" />
+            <input type="number" id="english" class="form-control full-section" placeholder="/50" min="0" max="50" />
           </div>
         </div>
         <div class="col-md-3">
           <div class="section-input card p-2 text-center">
             <label class="small text-muted">Reasoning</label>
-            <input type="number" id="reasoning" class="form-control full-section" placeholder="/50" max="50" />
+            <input type="number" id="reasoning" class="form-control full-section" placeholder="/50" min="0" max="50" />
           </div>
         </div>
         <div class="col-md-3">
           <div class="section-input card p-2 text-center">
             <label class="small text-muted">GK</label>
-            <input type="number" id="gk" class="form-control full-section" placeholder="/50" max="50" />
+            <input type="number" id="gk" class="form-control full-section" placeholder="/50" min="0" max="50" />
           </div>
         </div>
       </div>
@@ -227,10 +223,10 @@
           </select>
         </div>
         <div class="col-md-6">
-          <input type="number" id="sectionMarks" class="form-control form-control-lg" placeholder="Marks out of 50" max="50" />
+          <input type="number" id="sectionMarks" class="form-control form-control-lg" placeholder="Marks out of 50" min="0" max="50" />
         </div>
       </div>
-      <button id="saveBtn" onclick="submitData()" class="btn btn-success btn-lg w-100">💾 Save Entry</button>
+      <button id="saveBtn" class="btn btn-success btn-lg w-100">💾 Save Entry</button>
     </div>
 
     <!-- Analysis Dashboard -->
@@ -248,7 +244,7 @@
           </select>
         </div>
       </div>
-      <!-- 2x2 Grid for Analysis Tiles -->
+      <!-- Analysis Tiles -->
       <div class="row">
         <div class="col-md-6 mb-3">
           <div class="card analysis-tile p-3">
@@ -282,10 +278,10 @@
     </div>
   </div>
 
-  <!-- Script: Ensure DOMContentLoaded before running -->
-  <script>
+  <!-- Custom Script (runs after DOM is fully loaded) -->
+  <script defer>
     document.addEventListener("DOMContentLoaded", function() {
-      // Global variables
+      // Constants
       const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
       const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
       
@@ -322,7 +318,7 @@
         return prefix + counter;
       }
 
-      // --- Spinner ---
+      // --- Spinner Functions ---
       function showSpinner(message = "Loading...") {
         document.getElementById('spinnerText').innerText = message;
         document.getElementById('spinnerOverlay').classList.add('active');
@@ -344,12 +340,20 @@
         if (testType === 'full') {
           ['maths','english','reasoning','gk'].forEach(id => {
             const field = document.getElementById(id);
-            if (field.value.trim() === "") field.value = "0";
+            if (field.value.trim() === "") {
+              field.value = "0";
+            }
+            // Ensure value is a number and not more than 50
+            if (isNaN(field.value) || Number(field.value) > 50) {
+              alert("Each subject mark must be a number between 0 and 50.");
+              field.focus();
+              throw new Error("Invalid marks");
+            }
           });
         } else {
           const sectionMarks = document.getElementById('sectionMarks').value.trim();
-          if (!sectionMarks) {
-            alert("Sectional test marks are required.");
+          if (!sectionMarks || isNaN(sectionMarks) || Number(sectionMarks) > 50) {
+            alert("Sectional test marks must be a number between 0 and 50.");
             return false;
           }
         }
@@ -402,7 +406,12 @@
 
       // --- Submit Data ---
       async function submitData() {
-        if (!validateInput()) return;
+        try {
+          if (!validateInput()) return;
+        } catch (e) {
+          // Validation error already alerted.
+          return;
+        }
         showSpinner("Saving Data...");
         const payload = createPayload();
         try {
@@ -486,7 +495,7 @@
             }
           });
 
-          // Section Performance Chart: combine sectional entries with full test breakdowns
+          // Section Performance Chart
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             let sum = 0, count = 0;
@@ -495,7 +504,7 @@
               sum += Number(entry.Marks);
               count++;
             });
-            // For full tests (Overall), extract the subject mark from breakdown
+            // For full tests (Overall), extract subject mark from breakdown
             data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown).forEach(entry => {
               try {
                 const breakdown = JSON.parse(entry.breakdown);
@@ -606,7 +615,7 @@
             }
           });
 
-          // Combined English Analysis: combine sectional entries with full test breakdowns
+          // Combined English Analysis: combine sectional entries and full test breakdowns
           let englishMarks = [];
           data.filter(entry => entry.TestType === 'sectional' && entry.Section === 'English')
               .forEach(entry => englishMarks.push(Number(entry.Marks)));
@@ -653,7 +662,7 @@
         const pageHeight = doc.internal.pageSize.getHeight();
         let filteredData = marksData.slice();
 
-        // Apply filters same as table
+        // Apply same filters as table
         const subjectFilter = document.getElementById('filterSubject').value;
         if (subjectFilter !== 'All') {
           filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
@@ -728,15 +737,11 @@
         doc.save(`SSC_Marks_Report_${username}.pdf`);
       }
 
-      // Attach functions to window to expose globally for inline attributes
-      window.login = login;
-      window.fetchMarksData = fetchMarksData;
-      window.submitData = submitData;
-      window.loadCharts = loadCharts;
-      window.generatePDF = generatePDF;
-      window.showDashboard = function() {
-        document.getElementById('mainContent').style.display = 'block';
-      };
+      // --- Attach event listeners ---
+      document.getElementById('loginBtn').addEventListener('click', login);
+      document.getElementById('saveBtn').addEventListener('click', submitData);
+      document.getElementById('filterBtn').addEventListener('click', applyFilters);
+      document.getElementById('pdfBtn').addEventListener('click', generatePDF);
 
       // --- Login Function ---
       function login() {
@@ -772,7 +777,7 @@
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
 
-      // On page load, if a user is already logged in, initialize the dashboard
+      // If a user is already logged in, show the dashboard
       if (currentUser) {
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -782,7 +787,7 @@
     });
   </script>
 
-  <!-- Bootstrap Bundle with Popper -->
+  <!-- Bootstrap Bundle with Popper (defer not needed as it's at end) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
