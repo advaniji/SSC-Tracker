@@ -15,7 +15,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" defer></script>
-  <!-- Custom Styles -->
   <style>
     :root {
       --primary-color: #4a90e2;
@@ -54,7 +53,6 @@
       padding: 2rem;
       max-width: 400px;
       width: 100%;
-      /* Reduced hover effect */
       transition: box-shadow 0.2s ease;
     }
     .login-card:hover {
@@ -124,7 +122,7 @@
     </div>
     <div id="spinnerText" class="mt-2" style="color: var(--primary-color); font-weight: bold;">Loading...</div>
   </div>
-
+  
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg">
     <div class="container">
@@ -140,7 +138,7 @@
       </div>
     </div>
   </nav>
-
+  
   <!-- Login Section -->
   <div id="loginContainer" class="login-container">
     <div class="login-card">
@@ -161,7 +159,7 @@
       <button id="loginBtn" class="btn btn-primary btn-lg w-100">Login</button>
     </div>
   </div>
-
+  
   <!-- Main Content -->
   <div id="mainContent" class="container my-4" style="display:none;">
     <!-- Data Entry Form -->
@@ -236,8 +234,8 @@
       </div>
       <button id="saveBtn" class="btn btn-success btn-lg w-100">Save Entry</button>
     </div>
-
-    <!-- Analysis Dashboard (2x2 Grid) -->
+    
+    <!-- Analysis Dashboard -->
     <div id="analysisSectionContainer" class="glass-card">
       <h5 class="mb-3">Analysis Dashboard</h5>
       <!-- Filter Row -->
@@ -268,7 +266,7 @@
           <input type="date" id="filterTo" class="form-control" placeholder="To Date" />
         </div>
       </div>
-      <!-- 2x2 Grid for Analysis Tiles -->
+      <!-- Analysis Tiles (2x2 grid) -->
       <div class="grid-container">
         <!-- Tile 1: Overall Progress -->
         <div class="card analysis-tile p-3">
@@ -299,7 +297,7 @@
       </div>
     </div>
   </div>
-
+  
   <!-- Custom Script -->
   <script defer>
     document.addEventListener("DOMContentLoaded", function() {
@@ -312,7 +310,6 @@
       
       // Constants
       const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
-      // Replace with your deployed Apps Script URL
       const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
       
       let currentUser = localStorage.getItem('currentUser') || null;
@@ -322,7 +319,7 @@
       // Set today's date as default for testDate
       document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
       
-      // --- Descriptive Test ID Generation ---
+      // Descriptive Test ID Generation
       const prefixMapping = {
         full: {
           "Oliveboard": "OBFT",
@@ -348,8 +345,8 @@
         localStorage.setItem(prefix + '_counter', counter);
         return prefix + counter;
       }
-
-      // --- Spinner Functions ---
+      
+      // Spinner Functions
       function showSpinner(message = "Loading...") {
         document.getElementById('spinnerText').innerText = message;
         document.getElementById('spinnerOverlay').classList.add('active');
@@ -359,8 +356,8 @@
         document.getElementById('spinnerOverlay').classList.remove('active');
         document.getElementById('saveBtn').disabled = false;
       }
-
-      // --- Input Validation ---
+      
+      // Input Validation
       function validateInput() {
         const testDate = document.getElementById('testDate').value;
         if (!testDate) {
@@ -391,8 +388,8 @@
         }
         return true;
       }
-
-      // --- Create Payload ---
+      
+      // Create Payload
       function createPayload() {
         let testID = document.getElementById('testID').value.trim();
         const provider = document.getElementById('provider').value;
@@ -403,7 +400,7 @@
         const testDate = document.getElementById('testDate').value;
         const notes = document.getElementById('notes').value.trim();
         let payload = {};
-
+        
         if (testType === 'full') {
           const subjects = {
             Maths: Number(document.getElementById('maths').value),
@@ -424,7 +421,7 @@
             English: subjects.English,
             Reasoning: subjects.Reasoning,
             GK: subjects.GK,
-            username: currentUser // pass current user for sheet selection
+            username: currentUser
           };
         } else {
           payload = {
@@ -444,8 +441,8 @@
         }
         return payload;
       }
-
-      // --- Submit Data ---
+      
+      // Submit Data
       async function submitData() {
         try {
           if (!validateInput()) return;
@@ -472,27 +469,23 @@
           hideSpinner();
         }
       }
-
-      // --- Load Charts & Analysis ---
+      
+      // Load Charts & Analysis
       async function loadCharts() {
         showSpinner("Loading Charts...");
         try {
-          // Use opensheet.elk.sh to fetch data from the sheet named after the current user
           let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`)
                             .then(r => r.json());
           marksData = data;
-          // Apply provider filter if set
           const analysisProv = document.getElementById('filterProvider').value;
           if (analysisProv !== 'All') {
             data = data.filter(entry => entry.Provider === analysisProv);
           }
-          
-          // Overall Data: combine full tests and sectional tests
           const overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
                                          .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
-
+          
           [progressChart, sectionChart, datewiseProgressChart].forEach(chart => chart?.destroy());
-
+          
           // Overall Progress Chart (Line Chart)
           progressChart = new Chart(document.getElementById('progressChart'), {
             type: 'line',
@@ -543,7 +536,7 @@
               }
             }
           });
-
+          
           // Section Performance Chart (Bar Chart)
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
@@ -590,7 +583,7 @@
               }
             }
           });
-
+          
           // Datewise Progress Chart for Maths (Line Chart)
           const selectedSection = 'Maths';
           const datewiseData = data.filter(entry => {
@@ -653,8 +646,8 @@
               }
             }
           });
-
-          // Text-Based Analysis (Weighted Overall Average)
+          
+          // Text-Based Analysis
           const overallMarks = overallDataGlobal.map(entry => {
             if (entry.TestType === 'full' && entry.Section === 'Overall') {
               return Number(entry.Marks);
@@ -674,15 +667,14 @@
           hideSpinner();
         }
       }
-
-      // --- Generate PDF Report ---
+      
+      // Generate PDF Report
       async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'pt', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
         let filteredData = marksData.slice();
-
-        // Apply filters (same as used in loadCharts)
+        
         const subjectFilter = document.getElementById('filterSubject').value;
         if (subjectFilter !== 'All') {
           filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
@@ -699,8 +691,8 @@
         if (toDate) {
           filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) <= new Date(toDate));
         }
-
-        // --- Cover Page ---
+        
+        // Cover Page
         doc.setFillColor(26, 35, 126);
         doc.rect(0, 0, pageWidth, 50, 'F');
         doc.setTextColor(255, 255, 255);
@@ -710,11 +702,9 @@
         doc.text(`User: ${currentUser}`, 20, 70);
         doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 90);
         doc.addPage();
-
-        // --- Section: Summary ---
-        const convertedMarks = filteredData.map(entry => {
-          return entry.TestType === 'full' ? Number(entry.Marks) : Number(entry.Marks) * 4;
-        });
+        
+        // Summary Section
+        const convertedMarks = filteredData.map(entry => entry.TestType === 'full' ? Number(entry.Marks) : Number(entry.Marks) * 4);
         const avgMarks = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
         let yPos = 40;
         doc.setFontSize(18);
@@ -724,8 +714,21 @@
         doc.text(`Total Tests: ${filteredData.length}`, 20, yPos);
         doc.text(`Overall Average (weighted marks out of 200): ${avgMarks}`, 20, yPos + 20);
         yPos += 40;
-
-        // --- Section: Detailed Data Table ---
+        
+        // Provider-wise Summary (Example)
+        const providers = ['Oliveboard', 'RBE', 'Testbook', 'The Pundits', 'Other'];
+        providers.forEach(provider => {
+          const providerData = filteredData.filter(entry => entry.Provider === provider);
+          if (providerData.length > 0) {
+            let providerMarks = providerData.map(entry => entry.TestType === 'full' ? Number(entry.Marks) : Number(entry.Marks)*4);
+            const avg = (providerMarks.reduce((sum, m) => sum + m, 0) / providerMarks.length).toFixed(2);
+            doc.text(`${provider} - Total Tests: ${providerData.length}, Average (out of 200): ${avg}`, 20, yPos);
+            yPos += 20;
+          }
+        });
+        yPos += 20;
+        
+        // Detailed Data Table
         doc.setFontSize(18);
         doc.text('Detailed Marks Data', 20, yPos);
         yPos += 10;
@@ -757,7 +760,7 @@
           styles: { fontSize: 8, cellPadding: 3 },
           margin: { left: 20, right: 20 }
         });
-
+        
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
           doc.setPage(i);
@@ -766,13 +769,8 @@
         }
         doc.save(`SSC_Marks_Report_${currentUser}.pdf`);
       }
-
-      // --- Attach Event Listeners ---
-      document.getElementById('loginBtn').addEventListener('click', login);
-      document.getElementById('saveBtn').addEventListener('click', submitData);
-      document.getElementById('pdfBtn').addEventListener('click', generatePDF);
-
-      // --- Login Function ---
+      
+      // Login Function
       function login() {
         const usernameInput = document.getElementById('username').value;
         const password = document.getElementById('password').value;
@@ -795,8 +793,8 @@
             alert('🚨 Error loading passwords!');
           });
       }
-
-      // --- Setup Form Toggle ---
+      
+      // Setup Form Toggle
       function setupFormToggle() {
         document.getElementById('testType').addEventListener('change', function () {
           const isFullTest = this.value === 'full';
@@ -805,7 +803,12 @@
         });
         document.getElementById('testType').dispatchEvent(new Event('change'));
       }
-
+      
+      // Attach Event Listeners
+      document.getElementById('loginBtn').addEventListener('click', login);
+      document.getElementById('saveBtn').addEventListener('click', submitData);
+      document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+      
       if (currentUser) {
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -814,7 +817,7 @@
       }
     });
   </script>
-
+  
   <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
