@@ -5,15 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SSC Tracker - Your Preparation Companion</title>
     <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <!-- Chart.js and Time Adapter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+    <!-- jsPDF and jsPDF-AutoTable for PDF tables -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- html2canvas -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <!-- Custom Styles -->
     <style>
       :root {
@@ -21,7 +23,7 @@
         --secondary-color: #3949ab; /* Indigo */
         --accent-color: #e64a19; /* Deep orange */
         --light-bg: #f5f7fa;
-        --card-bg: rgba(255, 255, 255, 0.9);
+        --card-bg: rgba(255, 255, 255, 0.85);
       }
       body {
         background: var(--light-bg);
@@ -30,6 +32,7 @@
       /* Navbar Styling */
       .navbar {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
       }
       .navbar-brand, .nav-link {
         color: #fff !important;
@@ -40,7 +43,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background: var(--light-bg);
+        background: linear-gradient(135deg, #e0eafc, #cfdef3);
       }
       .login-card {
         background: var(--card-bg);
@@ -48,6 +51,8 @@
         border-radius: 15px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         padding: 2rem;
+        max-width: 400px;
+        width: 100%;
       }
       /* Glassmorphism effect for cards */
       .glass-card {
@@ -112,7 +117,7 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <!-- Modified to simply reload dashboard without logging out -->
+              <!-- "Back to Dashboard" now simply shows the dashboard -->
               <a class="nav-link" href="#" onclick="showDashboard()">Dashboard</a>
             </li>
             <li class="nav-item">
@@ -250,14 +255,15 @@
           </div>
           <div class="col-md-6 mb-3">
             <div class="card analysis-tile p-3">
-              <h6 class="text-center">Section Time-Series</h6>
-              <canvas id="sectionTimeSeriesChart"></canvas>
+              <h6 class="text-center">Datewise Progress</h6>
+              <!-- Renamed from Section Time-Series -->
+              <canvas id="datewiseProgressChart"></canvas>
             </div>
           </div>
           <div class="col-md-6 mb-3">
             <div class="card analysis-tile p-3">
               <h6 class="text-center">Text-Based Marks Analysis</h6>
-              <!-- Now shows all tests from the dataset -->
+              <!-- Uses full dataset with weighted average -->
               <div id="textAnalysis" class="mt-2"></div>
               <div class="text-center mt-2">
                 <a href="marks.html" class="btn btn-outline-primary btn-sm">View Full Analysis</a>
@@ -271,10 +277,6 @@
       </div>
     </div>
 
-    <!-- Required Libraries for PDF Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-
     <!-- Main Script -->
     <script>
       // Constants for Google Sheet and App Script URLs
@@ -282,9 +284,9 @@
       const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzvUkIUh7KJWToIOCWkgWWGqRD_cdvejkjkkQoTYkyDH_j5p8PH3rbZpShhjjrVplu/exec';
       
       let currentUser = localStorage.getItem('currentUser') || null;
-      let progressChart, sectionChart, sectionTimeSeriesChart;
+      let progressChart, sectionChart, datewiseProgressChart;
       let overallDataGlobal = [];
-
+      
       // Set today's date as default for testDate
       document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
 
@@ -415,11 +417,11 @@
           if (analysisProv !== 'All') {
             data = data.filter(entry => entry.Provider === analysisProv);
           }
-          // For charts, still show only Overall or sectional entries
+          // For charting, show only Overall and sectional entries
           overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
-                                     .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
+                                   .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
 
-          [progressChart, sectionChart, sectionTimeSeriesChart].forEach(chart => chart?.destroy());
+          [progressChart, sectionChart, datewiseProgressChart].forEach(chart => chart?.destroy());
 
           progressChart = new Chart(document.getElementById('progressChart'), {
             type: 'line',
@@ -490,16 +492,16 @@
             }
           });
 
-          // For time-series, use a selected section if exists (default to Maths)
+          // Rename Section Time-Series to "Datewise Progress"
           const selectedSection = document.getElementById('analysisSection') ? document.getElementById('analysisSection').value : 'Maths';
-          const sectionData = data.filter(entry => entry.Section === selectedSection)
+          const datewiseData = data.filter(entry => entry.Section === selectedSection)
             .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
-          sectionTimeSeriesChart = new Chart(document.getElementById('sectionTimeSeriesChart'), {
+          datewiseProgressChart = new Chart(document.getElementById('datewiseProgressChart'), {
             type: 'line',
             data: {
               datasets: [{
                 label: `${selectedSection} Marks`,
-                data: sectionData.map(entry => ({
+                data: datewiseData.map(entry => ({
                   x: new Date(entry.testDate || entry.Date),
                   y: Number(entry.Marks),
                   note: entry.Notes || ''
@@ -513,11 +515,11 @@
             options: {
               responsive: true,
               plugins: {
-                title: { display: true, text: `${selectedSection} Over Time` },
+                title: { display: true, text: `Datewise Progress for ${selectedSection}` },
                 tooltip: {
                   callbacks: {
                     label: function(context) {
-                      const note = sectionData[context.dataIndex].Notes;
+                      const note = datewiseData[context.dataIndex].Notes;
                       return note ? `${context.dataset.label}: ${context.parsed.y} (Note: ${note})`
                                   : `${context.dataset.label}: ${context.parsed.y}`;
                     }
@@ -538,14 +540,15 @@
             }
           });
 
-          // For text-based analysis, show all tests from the dataset
+          // Improved Text-Based Analysis with Weighted Average Calculation
           const totalTests = data.length;
-          const overallAvg = data.length 
-            ? (data.reduce((sum, entry) => sum + Number(entry.Marks), 0) / data.length).toFixed(2)
-            : 'N/A';
+          const totalMarksObtained = data.reduce((sum, entry) => sum + Number(entry.Marks), 0);
+          const totalPossibleMarks = data.reduce((sum, entry) => sum + Number(entry.Total), 0);
+          const overallWeightedAvg = totalPossibleMarks ? ((totalMarksObtained / totalPossibleMarks) * 100).toFixed(2) + '%' : 'N/A';
+
           document.getElementById('textAnalysis').innerHTML = `
             <p><strong>Total Tests:</strong> ${totalTests}</p>
-            <p><strong>Overall Average:</strong> ${overallAvg}</p>
+            <p><strong>Overall Weighted Average:</strong> ${overallWeightedAvg}</p>
           `;
         } catch (error) {
           console.error('Error loading charts:', error);
@@ -572,24 +575,91 @@
         doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 48);
 
         let yPos = 55;
-        const chartIds = ['progressChart', 'sectionChart', 'sectionTimeSeriesChart'];
+        const chartIds = ['progressChart', 'sectionChart', 'datewiseProgressChart'];
+        // Increase scale to 4 for better image quality
         for (const chartId of chartIds) {
           const canvas = document.getElementById(chartId);
-          const imgData = await html2canvas(canvas, { scale: 3 }).then(c => c.toDataURL('image/png'));
+          const imgData = await html2canvas(canvas, { scale: 4 }).then(c => c.toDataURL('image/png'));
           doc.addImage(imgData, 'PNG', 15, yPos, pageWidth - 30, 90);
           yPos += 100;
         }
         
-        const totalTests = overallDataGlobal.length;
-        const overallAvg = overallDataGlobal.length 
-          ? (overallDataGlobal.reduce((sum, entry) => sum + Number(entry.Marks), 0) / overallDataGlobal.length).toFixed(2)
-          : 'N/A';
+        // Add a summary section
+        const fullTests = [];
+        const sectionalTests = [];
+        let subjectTotals = { Maths: { marks: 0, count: 0 }, English: { marks: 0, count: 0 }, Reasoning: { marks: 0, count: 0 }, GK: { marks: 0, count: 0 } };
+
+        // Fetch all data for full pdf report
+        let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
+        data.forEach(entry => {
+          if (entry.TestType === 'full') {
+            fullTests.push(entry);
+            if (entry.Section !== 'Overall') {
+              if (subjectTotals[entry.Section]) {
+                subjectTotals[entry.Section].marks += Number(entry.Marks);
+                subjectTotals[entry.Section].count++;
+              }
+            }
+          } else {
+            sectionalTests.push(entry);
+          }
+        });
+        // Use weighted average for overall performance
+        const totalMarksObtained = data.reduce((sum, entry) => sum + Number(entry.Marks), 0);
+        const totalPossibleMarks = data.reduce((sum, entry) => sum + Number(entry.Total), 0);
+        const overallWeightedAvg = totalPossibleMarks ? ((totalMarksObtained / totalPossibleMarks) * 100).toFixed(2) + '%' : 'N/A';
+
         doc.setFontSize(14);
         doc.text('Summary', 15, yPos + 10);
         doc.setFontSize(12);
-        doc.text(`Total Tests: ${totalTests}`, 15, yPos + 20);
-        doc.text(`Overall Average Marks: ${overallAvg}`, 15, yPos + 30);
+        doc.text(`Total Tests: ${data.length}`, 15, yPos + 20);
+        doc.text(`Overall Weighted Average: ${overallWeightedAvg}`, 15, yPos + 30);
 
+        yPos += 40;
+        // Use jsPDF-AutoTable for tables
+        // Full Length Tests Summary
+        if(fullTests.length > 0) {
+          const fullTestData = fullTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Marks, test.Total, test.Notes]);
+          doc.autoTable({
+            startY: yPos,
+            head: [['Test ID', 'Date', 'Marks', 'Total', 'Notes']],
+            body: fullTestData,
+            theme: 'grid',
+            headStyles: { fillColor: [26, 35, 126] },
+            styles: { fontSize: 8 }
+          });
+          yPos = doc.lastAutoTable.finalY + 10;
+        }
+
+        // Sectional Tests Summary
+        if(sectionalTests.length > 0) {
+          const sectionalData = sectionalTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Section, test.Marks, test.Total, test.Notes]);
+          doc.autoTable({
+            startY: yPos,
+            head: [['Test ID', 'Date', 'Section', 'Marks', 'Total', 'Notes']],
+            body: sectionalData,
+            theme: 'grid',
+            headStyles: { fillColor: [26, 35, 126] },
+            styles: { fontSize: 8 }
+          });
+          yPos = doc.lastAutoTable.finalY + 10;
+        }
+
+        // Subject-wise Analysis for full length tests (excluding Overall)
+        const subjectRows = [];
+        for (const subject in subjectTotals) {
+          const avg = subjectTotals[subject].count ? (subjectTotals[subject].marks / subjectTotals[subject].count).toFixed(2) : 'N/A';
+          subjectRows.push([subject, subjectTotals[subject].count, avg]);
+        }
+        doc.autoTable({
+          startY: yPos,
+          head: [['Subject', 'No. of Tests', 'Average Marks']],
+          body: subjectRows,
+          theme: 'grid',
+          headStyles: { fillColor: [26, 35, 126] },
+          styles: { fontSize: 8 }
+        });
+        
         doc.setFontSize(10);
         const footerText = 'Created with SSC Tracker - By Advani Ji';
         doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, doc.internal.pageSize.getHeight() - 10);
