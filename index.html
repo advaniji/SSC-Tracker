@@ -264,7 +264,7 @@
         </div>
         <div class="col-md-6 mb-3">
           <div class="card analysis-tile p-3">
-            <h6 class="text-center">Datewise Progress</h6>
+            <h6 class="text-center">Datewise Progress (Maths)</h6>
             <canvas id="datewiseProgressChart"></canvas>
           </div>
         </div>
@@ -282,7 +282,6 @@
     </div>
   </div>
 
-  <!-- Main Script -->
   <script>
     // Constants for Google Sheet and App Script URLs
     const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
@@ -295,7 +294,6 @@
     document.getElementById('testDate').value = new Date().toISOString().split("T")[0];
 
     // --- Descriptive Test ID Generation ---
-    // Mapping based on provider and test type.
     const prefixMapping = {
       full: {
         "Oliveboard": "OBFT",
@@ -434,7 +432,8 @@
         if (analysisProv !== 'All') {
           data = data.filter(entry => entry.Provider === analysisProv);
         }
-        // Use only Overall (for full tests) and sectional entries for progress charts.
+        
+        // Overall Progress: use full test overall rows and sectional test rows
         const overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
                                        .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
 
@@ -485,12 +484,28 @@
           }
         });
 
-        // Section Performance Chart
+        // Section Performance Chart: combine sectional entries with full test breakdowns
         const sections = ['Maths', 'English', 'Reasoning', 'GK'];
         const sectionAverages = sections.map(section => {
-          const sectionData = data.filter(entry => entry.Section === section);
-          const totalMarks = sectionData.reduce((sum, entry) => sum + Number(entry.Marks), 0);
-          return sectionData.length ? (totalMarks / sectionData.length).toFixed(2) : 0;
+          let sum = 0, count = 0;
+          // Add sectional tests directly
+          data.filter(entry => entry.Section === section).forEach(entry => {
+            sum += Number(entry.Marks);
+            count++;
+          });
+          // For full tests (Overall), extract the subject mark from breakdown
+          data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown).forEach(entry => {
+            try {
+              const breakdown = JSON.parse(entry.breakdown);
+              if (breakdown[section] !== undefined) {
+                sum += Number(breakdown[section]);
+                count++;
+              }
+            } catch (e) {
+              console.error('Error parsing breakdown for section performance:', e);
+            }
+          });
+          return count ? (sum / count).toFixed(2) : 0;
         });
         sectionChart = new Chart(document.getElementById('sectionChart'), {
           type: 'bar',
@@ -511,20 +526,50 @@
           }
         });
 
-        // Datewise Progress for default subject (e.g. Maths)
+        // Datewise Progress Chart for a default subject (e.g., Maths)
         const selectedSection = 'Maths';
-        const datewiseData = data.filter(entry => entry.Section === selectedSection)
-                                 .sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
+        const datewiseData = data.filter(entry => {
+          if (entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown) {
+            try {
+              const breakdown = JSON.parse(entry.breakdown);
+              return breakdown[selectedSection] !== undefined;
+            } catch (e) {
+              return false;
+            }
+          } else {
+            return entry.Section === selectedSection;
+          }
+        }).sort((a, b) => new Date(a.testDate || a.Date) - new Date(b.testDate || b.Date));
+        
         datewiseProgressChart = new Chart(document.getElementById('datewiseProgressChart'), {
           type: 'line',
           data: {
             datasets: [{
               label: `${selectedSection} Marks`,
-              data: datewiseData.map(entry => ({
-                x: new Date(entry.testDate || entry.Date),
-                y: Number(entry.Marks),
-                note: entry.Notes || ''
-              })),
+              data: datewiseData.map(entry => {
+                if (entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown) {
+                  try {
+                    const breakdown = JSON.parse(entry.breakdown);
+                    return {
+                      x: new Date(entry.testDate || entry.Date),
+                      y: Number(breakdown[selectedSection]),
+                      note: entry.Notes || ''
+                    };
+                  } catch (e) {
+                    return {
+                      x: new Date(entry.testDate || entry.Date),
+                      y: Number(entry.Marks),
+                      note: entry.Notes || ''
+                    };
+                  }
+                } else {
+                  return {
+                    x: new Date(entry.testDate || entry.Date),
+                    y: Number(entry.Marks),
+                    note: entry.Notes || ''
+                  };
+                }
+              }),
               borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(),
               tension: 0.2,
               fill: false,
@@ -559,21 +604,19 @@
           }
         });
 
-        // Combined English Analysis:
+        // Combined English Analysis: sectional entries plus full test breakdowns
         let englishMarks = [];
         data.filter(entry => entry.TestType === 'sectional' && entry.Section === 'English')
             .forEach(entry => englishMarks.push(Number(entry.Marks)));
-        data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall')
+        data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown)
             .forEach(entry => {
-              if (entry.breakdown) {
-                try {
-                  const breakdown = JSON.parse(entry.breakdown);
-                  if (breakdown.English !== undefined) {
-                    englishMarks.push(Number(breakdown.English));
-                  }
-                } catch (error) {
-                  console.error('Error parsing breakdown for entry:', entry.TestID, error);
+              try {
+                const breakdown = JSON.parse(entry.breakdown);
+                if (breakdown.English !== undefined) {
+                  englishMarks.push(Number(breakdown.English));
                 }
+              } catch (error) {
+                console.error('Error parsing breakdown for English analysis:', error);
               }
             });
         const totalEnglish = englishMarks.reduce((sum, mark) => sum + mark, 0);
@@ -583,7 +626,7 @@
           <p><strong>Total English Tests:</strong> ${englishMarks.length}</p>
         `;
 
-        // Overall Average (using Overall and sectional tests)
+        // Overall Average (marks out of 200) from overallDataGlobal
         const overallMarks = overallDataGlobal.map(entry => {
           return Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks);
         });
@@ -606,174 +649,90 @@
       const doc = new jsPDF('p', 'pt', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
+      let filteredData = marksData.slice();
+
+      // Apply filters same as table
+      const subjectFilter = document.getElementById('filterSubject').value;
+      if (subjectFilter !== 'All') {
+        filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
+      }
+      const providerFilter = document.getElementById('filterProvider').value;
+      if (providerFilter !== 'All') {
+        filteredData = filteredData.filter(entry => entry.Provider === providerFilter);
+      }
+      const fromDate = document.getElementById('filterFrom').value;
+      const toDate = document.getElementById('filterTo').value;
+      if (fromDate) {
+        filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) >= new Date(fromDate));
+      }
+      if (toDate) {
+        filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) <= new Date(toDate));
+      }
 
       // --- Cover Page ---
-      doc.setFillColor(74, 144, 226);
-      doc.rect(0, 0, pageWidth, 100, 'F');
+      doc.setFillColor(26, 35, 126);
+      doc.rect(0, 0, pageWidth, 40, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(30);
-      doc.text('SSC Tracker Report', pageWidth / 2, 50, { align: 'center' });
-      doc.setFontSize(18);
-      doc.text('Elevate Your Preparation', pageWidth / 2, 80, { align: 'center' });
+      doc.setFontSize(24);
+      doc.text('SSC Tracker Marks Report', pageWidth / 2, 22, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('CGL : one last time', pageWidth / 2, 32, { align: 'center' });
+      doc.setFont(undefined, 'normal');
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(12);
-      doc.text(`User: ${currentUser}`, 40, 120);
-      doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 140);
-      doc.line(40, 150, pageWidth - 40, 150);
+      doc.text(`User: ${username}`, 15, 50);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 58);
       doc.addPage();
 
-      // --- Charts Section ---
-      let yPos = 40;
-      doc.setFontSize(22);
-      doc.text('Charts Overview', 40, yPos);
-      yPos += 20;
-      const chartIds = ['progressChart', 'sectionChart', 'datewiseProgressChart'];
-      for (const chartId of chartIds) {
-        const canvas = document.getElementById(chartId);
-        const imgData = await html2canvas(canvas, { scale: 3, useCORS: true }).then(c => c.toDataURL('image/jpeg', 1.0));
-        doc.addImage(imgData, 'JPEG', 40, yPos, pageWidth - 80, 150, undefined, 'FAST');
-        yPos += 170;
-        if (yPos > pageHeight - 80) {
-          doc.addPage();
-          yPos = 40;
-        }
-      }
-
-      // --- Detailed Data Tables ---
-      doc.addPage();
-      yPos = 40;
-      doc.setFontSize(22);
-      doc.text('Detailed Test Data', 40, yPos);
-      yPos += 20;
-      let data = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${currentUser}`).then(r => r.json());
-      const fullTests = [];
-      const sectionalTests = [];
-      let subjectTotals = { Maths: { marks: 0, count: 0 }, English: { marks: 0, count: 0 }, Reasoning: { marks: 0, count: 0 }, GK: { marks: 0, count: 0 } };
-      data.forEach(entry => {
-        if (entry.TestType === 'full') {
-          fullTests.push(entry);
-          if (entry.breakdown && entry.Section === 'Overall') {
-            try {
-              const breakdown = JSON.parse(entry.breakdown);
-              for (const subject in breakdown) {
-                subjectTotals[subject].marks += breakdown[subject];
-                subjectTotals[subject].count++;
-              }
-            } catch (error) {
-              console.error('Error parsing breakdown for PDF:', entry.TestID, error);
-            }
-          }
-        } else {
-          sectionalTests.push(entry);
-        }
-      });
-      const overallMarks = data.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
-      const avgMarksOutOf200 = overallMarks.length ? (overallMarks.reduce((sum, m) => sum + m, 0) / overallMarks.length).toFixed(2) : 'N/A';
+      // --- Section: Summary ---
+      const convertedMarks = filteredData.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
+      const avgMarks = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
+      let yPos = 15;
+      doc.setFontSize(18);
+      doc.text('Summary', 15, yPos);
+      yPos += 10;
       doc.setFontSize(14);
-      doc.text(`Total Tests: ${data.length}`, 40, yPos);
-      doc.text(`Overall Average (marks out of 200): ${avgMarksOutOf200}`, 40, yPos + 20);
-      yPos += 40;
+      doc.text(`Total Tests: ${filteredData.length}`, 15, yPos);
+      doc.text(`Overall Average (marks out of 200): ${avgMarks}`, 15, yPos + 8);
+      yPos += 20;
 
-      if (fullTests.length > 0) {
-        const fullTestData = fullTests.map(test => [test.TestID || test.testID, test.testDate || test.Date, test.Marks, test.Total, test.Notes]);
-        doc.autoTable({
-          startY: yPos,
-          head: [['Test ID', 'Date', 'Marks', 'Total', 'Notes']],
-          body: fullTestData,
-          theme: 'grid',
-          headStyles: { fillColor: [74, 144, 226] },
-          styles: { fontSize: 10 }
-        });
-        yPos = doc.lastAutoTable.finalY + 20;
-      }
-
-      if (sectionalTests.length > 0) {
-        const sectionalData = sectionalTests.map(test => [
-          test.TestID || test.testID,
-          test.testDate || test.Date,
-          test.Section,
-          test.Marks,
-          test.Total,
-          test.Notes
-        ]);
-        doc.autoTable({
-          startY: yPos,
-          head: [['Test ID', 'Date', 'Section', 'Marks', 'Total', 'Notes']],
-          body: sectionalData,
-          theme: 'grid',
-          headStyles: { fillColor: [74, 144, 226] },
-          styles: { fontSize: 10 }
-        });
-        yPos = doc.lastAutoTable.finalY + 20;
-      }
-
-      const subjectRows = [];
-      for (const subject in subjectTotals) {
-        const avg = subjectTotals[subject].count ? (subjectTotals[subject].marks / subjectTotals[subject].count).toFixed(2) : 'N/A';
-        subjectRows.push([subject, subjectTotals[subject].count, avg]);
-      }
+      // --- Section: Detailed Data Table ---
+      doc.setFontSize(18);
+      doc.text('Detailed Marks Data', 15, yPos);
+      yPos += 8;
+      const tableData = filteredData.map(entry => [
+        entry.TestID || entry.testID,
+        entry.testDate || entry.Date,
+        entry.Provider || '',
+        entry.TestType || '',
+        entry.Section || '',
+        entry.Marks || '',
+        entry.Total || '',
+        entry.Notes || ''
+      ]);
       doc.autoTable({
         startY: yPos,
-        head: [['Subject', 'No. of Tests', 'Average Marks']],
-        body: subjectRows,
+        head: [['Test ID', 'Date', 'Provider', 'Test Type', 'Section', 'Marks', 'Total', 'Notes']],
+        body: tableData,
         theme: 'grid',
-        headStyles: { fillColor: [74, 144, 226] },
-        styles: { fontSize: 10 }
+        headStyles: { fillColor: [26, 35, 126] },
+        styles: { fontSize: 8 }
       });
-      
-      doc.setFontSize(10);
+
       const footerText = 'Created with SSC Tracker - By Advani Ji';
-      doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, pageHeight - 20);
-      doc.save(`SSC_Report_${currentUser}.pdf`);
+      doc.setFontSize(10);
+      doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, doc.internal.pageSize.getHeight() - 10);
+      doc.save(`SSC_Marks_Report_${username}.pdf`);
     }
 
-    // --- Login & Initialization ---
-    document.getElementById('loginContainer').addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') login();
-    });
+    // On page load, fetch marks and populate table
+    window.onload = function () {
+      fetchMarksData();
+    };
 
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      fetch('passwords.json')
-        .then(response => response.json())
-        .then(passwords => {
-          if (passwords[username] === password) {
-            currentUser = username;
-            localStorage.setItem('currentUser', currentUser);
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            loadCharts();
-            setupFormToggle();
-          } else {
-            alert('🔒 Incorrect password!');
-          }
-        })
-        .catch(error => {
-          console.error('Error loading passwords:', error);
-          alert('🚨 Error loading passwords!');
-        });
-    }
-
-    function showDashboard() {
-      document.getElementById('mainContent').style.display = 'block';
-    }
-
-    function setupFormToggle() {
-      document.getElementById('testType').addEventListener('change', function () {
-        const isFullTest = this.value === 'full';
-        document.getElementById('fullTestSections').style.display = isFullTest ? 'flex' : 'none';
-        document.getElementById('sectionalTest').style.display = isFullTest ? 'none' : 'flex';
-      });
-      document.getElementById('testType').dispatchEvent(new Event('change'));
-    }
-
-    if (currentUser) {
-      document.getElementById('loginContainer').style.display = 'none';
-      document.getElementById('mainContent').style.display = 'block';
-      loadCharts();
-      setupFormToggle();
-    }
+    // Attach PDF button event
+    document.getElementById('pdfBtn').addEventListener('click', generatePDF);
   </script>
 
   <!-- Bootstrap Bundle with Popper -->
