@@ -129,7 +129,6 @@
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
-          <!-- Added link to marks.html -->
           <li class="nav-item"><a class="nav-link" href="marks.html">Marks Analysis</a></li>
         </ul>
       </div>
@@ -404,7 +403,10 @@
             section: 'Overall',
             marks: overall,
             notes,
-            breakdown: JSON.stringify(subjects)
+            Maths: subjects.Maths,
+            English: subjects.English,
+            Reasoning: subjects.Reasoning,
+            GK: subjects.GK
           };
         } else {
           payload = {
@@ -414,7 +416,11 @@
             testType: 'sectional',
             section: document.getElementById('section').value,
             marks: document.getElementById('sectionMarks').value,
-            notes
+            notes,
+            Maths: "",
+            English: "",
+            Reasoning: "",
+            GK: ""
           };
         }
         return payload;
@@ -458,13 +464,6 @@
           if (analysisProv !== 'All') {
             data = data.filter(entry => entry.Provider === analysisProv);
           }
-          
-          // Debug: log breakdown values
-          data.forEach(entry => {
-            if (entry.TestType === 'full' && entry.breakdown) {
-              console.log("Breakdown:", entry.breakdown);
-            }
-          });
           
           // Overall Progress: use full test overall rows and sectional test rows
           const overallDataGlobal = data.filter(entry => entry.Section === 'Overall' || entry.TestType === 'sectional')
@@ -517,7 +516,7 @@
             }
           });
 
-          // Section Performance Chart: combine sectional entries with full test breakdowns
+          // Section Performance Chart
           const sections = ['Maths', 'English', 'Reasoning', 'GK'];
           const sectionAverages = sections.map(section => {
             let sum = 0, count = 0;
@@ -526,16 +525,19 @@
               sum += Number(entry.Marks);
               count++;
             });
-            // For full tests (Overall), extract subject mark from breakdown
-            data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown).forEach(entry => {
-              try {
-                const breakdown = JSON.parse(entry.breakdown);
-                if (breakdown[section] !== undefined) {
-                  sum += Number(breakdown[section]);
-                  count++;
-                }
-              } catch (e) {
-                console.error('Error parsing breakdown for section performance:', e);
+            // For full tests, read individual columns
+            data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall').forEach(entry => {
+              if (entry.Maths !== "" && !isNaN(Number(entry.Maths))) {
+                if (section === "Maths") { sum += Number(entry.Maths); count++; }
+              }
+              if (entry.English !== "" && !isNaN(Number(entry.English))) {
+                if (section === "English") { sum += Number(entry.English); count++; }
+              }
+              if (entry.Reasoning !== "" && !isNaN(Number(entry.Reasoning))) {
+                if (section === "Reasoning") { sum += Number(entry.Reasoning); count++; }
+              }
+              if (entry.GK !== "" && !isNaN(Number(entry.GK))) {
+                if (section === "GK") { sum += Number(entry.GK); count++; }
               }
             });
             return count ? (sum / count).toFixed(2) : 0;
@@ -559,16 +561,11 @@
             }
           });
 
-          // Datewise Progress Chart for a default subject (e.g., Maths)
+          // Datewise Progress Chart for Maths
           const selectedSection = 'Maths';
           const datewiseData = data.filter(entry => {
-            if (entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown) {
-              try {
-                const breakdown = JSON.parse(entry.breakdown);
-                return breakdown[selectedSection] !== undefined;
-              } catch (e) {
-                return false;
-              }
+            if (entry.TestType === 'full' && entry.Section === 'Overall') {
+              return entry.Maths !== "" && !isNaN(Number(entry.Maths));
             } else {
               return entry.Section === selectedSection;
             }
@@ -580,21 +577,12 @@
               datasets: [{
                 label: `${selectedSection} Marks`,
                 data: datewiseData.map(entry => {
-                  if (entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown) {
-                    try {
-                      const breakdown = JSON.parse(entry.breakdown);
-                      return {
-                        x: new Date(entry.testDate || entry.Date),
-                        y: Number(breakdown[selectedSection]),
-                        note: entry.Notes || ''
-                      };
-                    } catch (e) {
-                      return {
-                        x: new Date(entry.testDate || entry.Date),
-                        y: Number(entry.Marks),
-                        note: entry.Notes || ''
-                      };
-                    }
+                  if (entry.TestType === 'full' && entry.Section === 'Overall') {
+                    return {
+                      x: new Date(entry.testDate || entry.Date),
+                      y: Number(entry.Maths),
+                      note: entry.Notes || ''
+                    };
                   } else {
                     return {
                       x: new Date(entry.testDate || entry.Date),
@@ -637,19 +625,14 @@
             }
           });
 
-          // Combined English Analysis: combine sectional entries and full test breakdowns
+          // Combined English Analysis
           let englishMarks = [];
           data.filter(entry => entry.TestType === 'sectional' && entry.Section === 'English')
               .forEach(entry => englishMarks.push(Number(entry.Marks)));
-          data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall' && entry.breakdown)
+          data.filter(entry => entry.TestType === 'full' && entry.Section === 'Overall')
               .forEach(entry => {
-                try {
-                  const breakdown = JSON.parse(entry.breakdown);
-                  if (breakdown.English !== undefined) {
-                    englishMarks.push(Number(breakdown.English));
-                  }
-                } catch (error) {
-                  console.error('Error parsing breakdown for English analysis:', error);
+                if (entry.English !== "" && !isNaN(Number(entry.English))) {
+                  englishMarks.push(Number(entry.English));
                 }
               });
           const totalEnglish = englishMarks.reduce((sum, mark) => sum + mark, 0);
@@ -659,9 +642,15 @@
             <p><strong>Total English Tests:</strong> ${englishMarks.length}</p>
           `;
 
-          // Text-based Analysis: Total tests & overall average (weighted)
+          // Text-based Analysis: Total tests and weighted overall average
           const overallMarks = overallDataGlobal.map(entry => {
-            return Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks);
+            if (entry.TestType === 'full' && entry.Section === 'Overall') {
+              // Use the overall marks as stored in the row
+              return Number(entry.Marks);
+            } else {
+              // For sectional, multiply by 4
+              return Number(entry.Marks) * 4;
+            }
           });
           const avgMarksOutOf200 = overallMarks.length ? (overallMarks.reduce((sum, m) => sum + m, 0) / overallMarks.length).toFixed(2) : 'N/A';
           document.getElementById('textAnalysis').innerHTML = `
@@ -742,11 +731,17 @@
           entry.Section || '',
           entry.Marks || '',
           entry.Total || '',
-          entry.Notes || ''
+          entry.Notes || '',
+          entry.Math ? entry.Math : entry.Math === 0 ? 0 : "",
+          entry.English ? entry.English : entry.English === 0 ? 0 : "",
+          entry.Reasoning ? entry.Reasoning : entry.Reasoning === 0 ? 0 : "",
+          entry.GK ? entry.GK : entry.GK === 0 ? 0 : ""
         ]);
+        // Define headers for new columns
+        const headers = ['Test ID', 'Date', 'Provider', 'Test Type', 'Section', 'Marks', 'Total', 'Notes', 'Maths', 'English', 'Reasoning', 'GK'];
         doc.autoTable({
           startY: yPos,
-          head: [['Test ID', 'Date', 'Provider', 'Test Type', 'Section', 'Marks', 'Total', 'Notes']],
+          head: [headers],
           body: tableData,
           theme: 'grid',
           headStyles: { fillColor: [26, 35, 126] },
