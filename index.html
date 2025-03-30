@@ -214,7 +214,37 @@
             fetchData();
         } else {
             showLoginSection();
+    if (currentUsername) {
+        showMainContent();
+        fetchData();
+    } else {
+        showLoginSection();
+        fetchUsers(); // Load usernames when showing login
+    }
+});
+
+// New function to fetch usernames
+async function fetchUsers() {
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getusers`);
+        if (!response.ok) throw new Error('Failed to fetch users');
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            const usernameSelect = document.getElementById('username');
+            usernameSelect.innerHTML = '<option value="" disabled selected>Select your username</option>';
+            result.usernames.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                usernameSelect.appendChild(option);
+            });
         }
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        showLoginAlert('Could not load user list. Please try again.', 'danger');
+    }
+}
 
         // Add event listeners
         loginForm.addEventListener('submit', handleLogin);
