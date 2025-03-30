@@ -10,7 +10,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- html2pdf.js (for PDF generation if needed on analysis page) -->
+  <!-- html2pdf.js (for PDF generation on analysis page if needed) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -43,12 +43,13 @@
           </div>
           <div class="col-md-4 mb-3">
             <label for="testDate" class="form-label">Date</label>
-            <input type="date" id="testDate" class="form-control" required>
+            <!-- Default to today's date; disable manual typing -->
+            <input type="date" id="testDate" class="form-control" required onkeydown="return false;">
           </div>
           <div class="col-md-4 mb-3">
             <label for="testType" class="form-label">Test Type</label>
             <select id="testType" class="form-select" required>
-              <option value="full">Full Test (200 marks)</option>
+              <option value="full">Full Test</option>
               <option value="sectional">Sectional Test</option>
             </select>
           </div>
@@ -76,7 +77,7 @@
           </div>
         </div>
 
-        <h4>Marks (out of 50 each)</h4>
+        <h4>Marks (each out of 50)</h4>
         <div class="row">
           <div class="col-md-3 mb-3">
             <label for="maths" class="form-label">Maths</label>
@@ -101,9 +102,11 @@
       <!-- Graphs Section -->
       <h2 class="mt-5">Progress Tracker</h2>
       <div class="row">
+        <!-- Overall Tracker: Overall Marks over Time -->
         <div class="col-md-6">
           <canvas id="overallChart"></canvas>
         </div>
+        <!-- Subject Tracker: Line graphs for each subject -->
         <div class="col-md-6">
           <canvas id="subjectChart"></canvas>
         </div>
@@ -118,10 +121,16 @@
 
   <!-- JavaScript -->
   <script>
+    // Set the testDate input to today's date (YYYY-MM-DD format)
+    document.addEventListener("DOMContentLoaded", function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('testDate').value = today;
+    });
+
     // Global variables for storing credentials, service account info, and the logged-in username.
     let userCredentials = [];
     let googleServiceAccount = {};
-    let loggedInUser = ""; // will store the username after successful login
+    let loggedInUser = ""; // stores the username after login
 
     // Load passwords from passwords.json (place this file in the same folder)
     fetch('./passwords.json')
@@ -185,32 +194,30 @@
       const reasoning = parseFloat(document.getElementById('reasoning').value);
       const gk = parseFloat(document.getElementById('gk').value);
       
-      // Calculate total marks and percentage
+      // Calculate overall marks (sum of all subjects)
       const totalMarks = maths + english + reasoning + gk;
-      const percentage = (totalMarks / 200) * 100;
       
-      // Build test entry object and include the logged-in username
+      // Build test entry object (without percentage)
       const testEntry = { 
         username: loggedInUser,  // used to select the correct sheet in Google Apps Script
         testId, 
         testDate, 
         testType, 
         section, 
-        provider, 
+        totalMarks,  // Overall marks
         notes, 
+        provider, 
         maths, 
         english, 
         reasoning, 
-        gk, 
-        totalMarks, 
-        percentage 
+        gk
       };
       
       testData.push(testEntry);
       alert('Test data submitted locally!');
       updateCharts();
       
-      // Send testEntry to the Google Apps Script endpoint for writing to the sheet.
+      // Send testEntry to your Google Apps Script endpoint for writing to the sheet.
       fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -224,21 +231,22 @@
     // Initialize Charts using Chart.js
     let overallChart, subjectChart;
     function updateCharts() {
-      // Prepare data for overall chart (dates vs. overall percentage)
+      // Prepare data for overall tracker (using test dates vs. overall marks)
       const labels = testData.map(entry => entry.testDate);
-      const overallData = testData.map(entry => entry.percentage);
+      const overallData = testData.map(entry => entry.totalMarks);
 
       // Destroy previous charts if they exist
       if (overallChart) overallChart.destroy();
       if (subjectChart) subjectChart.destroy();
 
+      // Overall Tracker Chart
       const overallCtx = document.getElementById('overallChart').getContext('2d');
       overallChart = new Chart(overallCtx, {
         type: 'line',
         data: {
           labels: labels,
           datasets: [{
-            label: 'Overall Percentage',
+            label: 'Overall Marks',
             data: overallData,
             borderColor: 'blue',
             backgroundColor: 'lightblue',
@@ -248,14 +256,13 @@
         options: {
           scales: {
             y: {
-              beginAtZero: true,
-              max: 100
+              beginAtZero: true
             }
           }
         }
       });
 
-      // Prepare data for individual subject tracker
+      // Subject Tracker Chart (line graphs for each subject)
       const mathsData = testData.map(entry => entry.maths);
       const englishData = testData.map(entry => entry.english);
       const reasoningData = testData.map(entry => entry.reasoning);
