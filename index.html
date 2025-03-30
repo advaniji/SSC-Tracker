@@ -132,7 +132,8 @@
 
       <!-- Link to Complete Analysis Page -->
       <div class="mt-4 text-center">
-        <a href="marks.html" class="btn btn-primary"><i class="fa fa-chart-line"></i> Complete Analysis</a>
+        <!-- Pass the logged in username to marks.html via query parameter -->
+        <a id="analysisLink" href="#" class="btn btn-primary"><i class="fa fa-chart-line"></i> Complete Analysis</a>
       </div>
     </div>
   </div>
@@ -144,7 +145,6 @@
       const today = new Date().toISOString().split('T')[0];
       const dateInput = document.getElementById('testDate');
       dateInput.value = today;
-      // Also set readonly to prevent manual typing.
       dateInput.setAttribute('readonly', true);
     });
 
@@ -182,6 +182,9 @@
       const validUser = userCredentials.find(u => u.username === username && u.password === password);
       if (validUser) {
         loggedInUser = validUser.username; // store logged-in username
+        // Set the analysis link with the username in query param (capitalized first letter)
+        const userParam = loggedInUser.charAt(0).toUpperCase() + loggedInUser.slice(1);
+        document.getElementById('analysisLink').href = "marks.html?user=" + userParam;
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
       } else {
@@ -192,8 +195,8 @@
     // Local storage for test data (for chart updates)
     let testData = [];
 
-    // URL of your deployed Google Apps Script Web App (replace with your actual URL)
-    const scriptUrl = "Yhttps://script.google.com/macros/s/AKfycbxXf0qT6QWrqSy7td0HAmcM9a36mVCvasRnKwBiWbnkNTzbxvVXDRirm19oQZfMSRp0/exec";
+    // URL of your deployed Google Apps Script Web App (actual value)
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbxXf0qT6QWrqSy7td0HAmcM9a36mVCvasRnKwBiWbnkNTzbxvVXDRirm19oQZfMSRp0/exec";
 
     // Handle test form submission
     document.getElementById('testForm').addEventListener('submit', function(e) {
@@ -217,7 +220,7 @@
       // Calculate overall marks (sum of all subjects)
       const totalMarks = maths + english + reasoning + gk;
       
-      // Build test entry object (without percentage)
+      // Build test entry object
       const testEntry = { 
         username: loggedInUser, 
         testId, 
