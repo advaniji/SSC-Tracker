@@ -3,327 +3,334 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Marks Analysis - SSC Tracker</title>
+  <title>SSC Tracker - Marks Analysis</title>
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- Google Fonts: Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <!-- jsPDF, jsPDF-AutoTable and html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  <!-- Custom Styles -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
-    :root {
-      --primary-color: #4a90e2;
-      --secondary-color: #50e3c2;
-      --accent-color: #f5a623;
-      --light-bg: #f0f4f8;
-      --card-bg: rgba(255, 255, 255, 0.95);
-    }
     body {
-      background: linear-gradient(135deg, var(--light-bg), #ffffff);
-      font-family: 'Poppins', sans-serif;
-      color: #333;
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-family: 'Inter', sans-serif;
+      padding-top: 70px;
     }
-    .navbar {
-      background: var(--primary-color);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    .gradient-text {
+      background: linear-gradient(45deg, rgb(99, 102, 241), rgb(139, 92, 246));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
-    .navbar-brand, .nav-link {
-      color: #fff !important;
+    .chart-container {
+      position: relative;
+      margin: auto;
+      height: 300px;
     }
-    .navbar-brand:hover, .nav-link:hover {
-      opacity: 0.8;
-    }
-    .glass-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      padding: 1.5rem;
-      margin-top: 2rem;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .glass-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    }
-    .filter-group .form-control,
-    .filter-group .form-select {
-      margin-bottom: 0.5rem;
-    }
-    .filter-header {
-      border-bottom: 2px solid var(--primary-color);
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    button:hover {
-      opacity: 0.9;
-      transform: scale(1.02);
-      transition: all 0.2s ease;
-    }
-    @media (max-width: 576px) {
-      .glass-card {
-        margin: 1rem;
-        padding: 1rem;
-      }
+    .toggle-group {
+      margin-bottom: 1.5rem;
     }
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg">
+  <nav class="navbar navbar-expand-lg fixed-top bg-white shadow-sm">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="https://advaniji.github.io/SSC-Tracker/" target="_blank">
-        📘 SSC Tracker
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="index.html">Dashboard</a>
-          </li>
-        </ul>
-      </div>
+      <a class="navbar-brand gradient-text fw-bold fs-4" href="#">SSC Tracker - Marks Analysis</a>
     </div>
   </nav>
 
-  <!-- Main Container -->
-  <div class="container">
-    <h3 class="mt-4 text-center">Detailed Marks Analysis</h3>
-    <!-- Filter Options -->
-    <div class="glass-card">
-      <div class="filter-header">
-        <h5>Filter Options</h5>
-      </div>
-      <div class="row filter-group">
-        <div class="col-md-4">
-          <label for="filterSubject" class="form-label">Subject</label>
-          <select id="filterSubject" class="form-select">
-            <option value="All">All Subjects</option>
-            <option value="Maths">Maths</option>
-            <option value="English">English</option>
-            <option value="Reasoning">Reasoning</option>
-            <option value="GK">GK</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label for="filterProvider" class="form-label">Provider</label>
-          <select id="filterProvider" class="form-select">
-            <option value="All">All Providers</option>
-            <option value="Oliveboard">Oliveboard</option>
-            <option value="RBE">RBE</option>
-            <option value="Testbook">Testbook</option>
-            <option value="The Pundits">The Pundits</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label for="filterFrom" class="form-label">From</label>
-          <input type="date" id="filterFrom" class="form-control" />
-        </div>
-        <div class="col-md-2">
-          <label for="filterTo" class="form-label">To</label>
-          <input type="date" id="filterTo" class="form-control" />
-        </div>
-      </div>
-      <div class="text-center">
-        <button id="filterBtn" class="btn btn-primary mt-2">Apply Filters</button>
+  <div class="container my-4">
+    <div id="userInfo" class="mb-3"></div>
+    <div id="alertPlaceholder"></div>
+    
+    <!-- Toggle for Analysis Views -->
+    <div class="toggle-group text-center">
+      <div class="btn-group" role="group" aria-label="Analysis Toggle">
+        <input type="radio" class="btn-check" name="analysisToggle" id="detailedToggle" autocomplete="off" checked>
+        <label class="btn btn-outline-primary" for="detailedToggle">Detailed Analysis</label>
+      
+        <input type="radio" class="btn-check" name="analysisToggle" id="subjectToggle" autocomplete="off">
+        <label class="btn btn-outline-primary" for="subjectToggle">Subject-wise Analysis</label>
       </div>
     </div>
 
-    <!-- Marks Table Card -->
-    <div class="glass-card">
-      <div class="table-responsive">
-        <table class="table table-striped align-middle">
-          <thead class="table-dark">
-            <tr>
-              <th>Test ID</th>
-              <th>Date</th>
-              <th>Provider</th>
-              <th>Test Type</th>
-              <th>Section</th>
-              <th>Marks</th>
-              <th>Total</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="marksTableBody">
-            <!-- Data rows will be populated here -->
-          </tbody>
-        </table>
+    <!-- Detailed Analysis Section -->
+    <div id="detailedSection">
+      <!-- Overall Score Trend Chart -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Overall Score Trend (Full Tests)</h5>
+          <div class="chart-container">
+            <canvas id="scoreTrendChart"></canvas>
+          </div>
+        </div>
       </div>
-      <div class="text-center mt-3">
-        <button id="pdfBtn" class="btn btn-danger">Download PDF Report</button>
+      <!-- Detailed Data Table -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Test Data Details</h5>
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table table-striped table-bordered" id="detailedTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Provider</th>
+                <th>Type</th>
+                <th>Section</th>
+                <th>Maths</th>
+                <th>English</th>
+                <th>Reasoning</th>
+                <th>GK</th>
+                <th>Total</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Detailed rows will be injected here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject-wise Analysis Section (Hidden by Default) -->
+    <div id="subjectSection" style="display:none;">
+      <!-- Subject-wise Averages Table -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Subject-wise Averages (Full Tests)</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-bordered" id="subjectTable">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Average Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Aggregated rows will be injected here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Subject-wise Average Chart -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Subject-wise Average Chart</h5>
+          <div class="chart-container">
+            <canvas id="subjectChart"></canvas>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
   <script>
-    // Global variables
-    const SHEET_ID = '1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ';
-    const username = localStorage.getItem('currentUser') || 'Advani';
-    let marksData = [];
+    // --- Configuration ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAIi9huCzHb0AE3ufMmIS2CYLjRF-mBhObPUHkoNhVWln4bAJzIWNIcRQlcKsz8WE5/exec";
 
-    // Load marks data from OpenSheet
-    async function fetchMarksData() {
+    // --- Global Chart Variables ---
+    let scoreTrendChartInstance = null;
+    let subjectChartInstance = null;
+
+    // --- Utility Functions ---
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function showAlert(message, type = 'info') {
+      document.getElementById("alertPlaceholder").innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString();
+    }
+
+    // --- Data Fetching ---
+    async function fetchData(username) {
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${username}`);
-        marksData = await response.json();
-        applyFilters();
+        const response = await fetch(`${SCRIPT_URL}?action=getdata&username=${encodeURIComponent(username)}`);
+        if (!response.ok) throw new Error("Network error: " + response.status);
+        const result = await response.json();
+        if (result.status !== "success") throw new Error(result.message);
+        return result.data;
       } catch (error) {
-        console.error('Error fetching marks:', error);
+        showAlert("Error fetching data: " + error.message, "danger");
+        return [];
       }
     }
 
-    // Apply filters and update the table
-    function applyFilters() {
-      let filteredData = marksData.slice();
-
-      // Filter by Subject
-      const subjectFilter = document.getElementById('filterSubject').value;
-      if (subjectFilter !== 'All') {
-        filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
-      }
-
-      // Filter by Provider
-      const providerFilter = document.getElementById('filterProvider').value;
-      if (providerFilter !== 'All') {
-        filteredData = filteredData.filter(entry => entry.Provider === providerFilter);
-      }
-
-      // Filter by Timeline
-      const fromDate = document.getElementById('filterFrom').value;
-      const toDate = document.getElementById('filterTo').value;
-      if (fromDate) {
-        filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) >= new Date(fromDate));
-      }
-      if (toDate) {
-        filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) <= new Date(toDate));
-      }
-
-      // Update table
-      populateTable(filteredData);
-    }
-
-    function populateTable(data) {
-      const tbody = document.getElementById('marksTableBody');
-      tbody.innerHTML = '';
-      data.forEach(entry => {
-        const tr = document.createElement('tr');
+    // --- Detailed Analysis Rendering ---
+    function renderDetailedTable(data) {
+      const tbody = document.querySelector("#detailedTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${entry.TestID || entry.testID}</td>
-          <td>${entry.testDate || entry.Date}</td>
-          <td>${entry.Provider || ''}</td>
-          <td>${entry.TestType || ''}</td>
-          <td>${entry.Section || ''}</td>
-          <td>${entry.Marks || ''}</td>
-          <td>${entry.Total || ''}</td>
-          <td>${entry.Notes || ''}</td>
+          <td>${row.Date ? formatDate(row.Date) : ""}</td>
+          <td>${row.Provider || ""}</td>
+          <td>${row.TestType || ""}</td>
+          <td>${row.Section || ""}</td>
+          <td>${(row.Maths !== null && row.Maths !== undefined) ? row.Maths : "-"}</td>
+          <td>${(row.English !== null && row.English !== undefined) ? row.English : "-"}</td>
+          <td>${(row.Reasoning !== null && row.Reasoning !== undefined) ? row.Reasoning : "-"}</td>
+          <td>${(row.GK !== null && row.GK !== undefined) ? row.GK : "-"}</td>
+          <td>${(row.TotalMarks !== null && row.TotalMarks !== undefined) ? row.TotalMarks : "-"}</td>
+          <td>${row.Notes || ""}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // Set up filter button event
-    document.getElementById('filterBtn').addEventListener('click', applyFilters);
-
-    // PDF Generation Function (generates report based on current filtered data)
-    async function generatePDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      let filteredData = marksData.slice();
-
-      // Apply same filters as in the table
-      const subjectFilter = document.getElementById('filterSubject').value;
-      if (subjectFilter !== 'All') {
-        filteredData = filteredData.filter(entry => entry.Section === subjectFilter);
-      }
-      const providerFilter = document.getElementById('filterProvider').value;
-      if (providerFilter !== 'All') {
-        filteredData = filteredData.filter(entry => entry.Provider === providerFilter);
-      }
-      const fromDate = document.getElementById('filterFrom').value;
-      const toDate = document.getElementById('filterTo').value;
-      if (fromDate) {
-        filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) >= new Date(fromDate));
-      }
-      if (toDate) {
-        filteredData = filteredData.filter(entry => new Date(entry.testDate || entry.Date) <= new Date(toDate));
-      }
-
-      // --- Cover Page ---
-      doc.setFillColor(26, 35, 126);
-      doc.rect(0, 0, pageWidth, 40, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.text('SSC Tracker Marks Report', pageWidth / 2, 22, { align: 'center' });
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text('CGL : one last time', pageWidth / 2, 32, { align: 'center' });
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
-      doc.text(`User: ${username}`, 15, 50);
-      doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 58);
-      doc.addPage();
-
-      // --- Section: Summary ---
-      // Convert sectional marks to marks out of 200 (multiply by 4)
-      const convertedMarks = filteredData.map(entry => Number(entry.Total) === 50 ? Number(entry.Marks) * 4 : Number(entry.Marks));
-      const avgMarks = convertedMarks.length ? (convertedMarks.reduce((sum, m) => sum + m, 0) / convertedMarks.length).toFixed(2) : 'N/A';
-      let yPos = 15;
-      doc.setFontSize(18);
-      doc.text('Summary', 15, yPos);
-      yPos += 10;
-      doc.setFontSize(14);
-      doc.text(`Total Tests: ${filteredData.length}`, 15, yPos);
-      doc.text(`Overall Average (marks out of 200): ${avgMarks}`, 15, yPos + 8);
-      yPos += 20;
-
-      // --- Section: Data Table ---
-      doc.setFontSize(18);
-      doc.text('Detailed Marks Data', 15, yPos);
-      yPos += 8;
-      const tableData = filteredData.map(entry => [
-        entry.TestID || entry.testID,
-        entry.testDate || entry.Date,
-        entry.Provider || '',
-        entry.TestType || '',
-        entry.Section || '',
-        entry.Marks || '',
-        entry.Total || '',
-        entry.Notes || ''
-      ]);
-      doc.autoTable({
-        startY: yPos,
-        head: [['Test ID', 'Date', 'Provider', 'Test Type', 'Section', 'Marks', 'Total', 'Notes']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [26, 35, 126] },
-        styles: { fontSize: 8 }
+    function renderScoreTrendChart(data) {
+      const ctx = document.getElementById("scoreTrendChart").getContext("2d");
+      // Filter for full tests with valid TotalMarks
+      const fullTests = data.filter(d => d.TestType === "full" && d.TotalMarks !== null && d.Date)
+                            .sort((a, b) => new Date(a.Date) - new Date(b.Date));
+      if (scoreTrendChartInstance) scoreTrendChartInstance.destroy();
+      if (fullTests.length === 0) return;
+      scoreTrendChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: fullTests.map(d => d.Date),
+          datasets: [{
+            label: "Total Score",
+            data: fullTests.map(d => d.TotalMarks),
+            borderColor: "rgb(99, 102, 241)",
+            backgroundColor: "rgba(99, 102, 241, 0.1)",
+            fill: true,
+            tension: 0.1,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              type: "time",
+              time: { unit: "day", tooltipFormat: "MMM d, yyyy" },
+              title: { display: true, text: "Date" }
+            },
+            y: {
+              title: { display: true, text: "Total Score (out of 200)" },
+              beginAtZero: true,
+              suggestedMax: 200
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
       });
-
-      const footerText = 'Created with SSC Tracker - By Advani Ji';
-      doc.setFontSize(10);
-      doc.text(footerText, (pageWidth - doc.getTextWidth(footerText)) / 2, doc.internal.pageSize.getHeight() - 10);
-      doc.save(`SSC_Marks_Report_${username}.pdf`);
     }
 
-    // On page load, fetch marks and populate table
-    window.onload = function () {
-      fetchMarksData();
-    };
+    // --- Subject-wise Analysis Rendering ---
+    function renderSubjectAnalysis(data) {
+      // Filter only full tests with numeric marks
+      const fullTests = data.filter(d => d.TestType === "full" && d.TotalMarks !== null);
+      const subjects = ["Maths", "English", "Reasoning", "GK"];
+      const sums = { Maths: 0, English: 0, Reasoning: 0, GK: 0 };
+      const counts = { Maths: 0, English: 0, Reasoning: 0, GK: 0 };
 
-    // Attach PDF button event
-    document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+      fullTests.forEach(d => {
+        subjects.forEach(sub => {
+          if (d[sub] !== null && d[sub] !== undefined && !isNaN(Number(d[sub]))) {
+            sums[sub] += Number(d[sub]);
+            counts[sub]++;
+          }
+        });
+      });
+
+      const averages = subjects.map(sub => counts[sub] > 0 ? (sums[sub] / counts[sub]).toFixed(1) : "N/A");
+
+      // Render aggregated table
+      const tbody = document.querySelector("#subjectTable tbody");
+      tbody.innerHTML = "";
+      subjects.forEach((sub, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${sub}</td><td>${averages[idx]}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Render bar chart for subject averages
+      const ctx = document.getElementById("subjectChart").getContext("2d");
+      if (subjectChartInstance) subjectChartInstance.destroy();
+      subjectChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: subjects,
+          datasets: [{
+            label: "Average Score",
+            data: subjects.map(sub => counts[sub] > 0 ? (sums[sub] / counts[sub]) : 0),
+            backgroundColor: [
+              "rgba(54, 162, 235, 0.6)",
+              "rgba(255, 99, 132, 0.6)",
+              "rgba(75, 192, 192, 0.6)",
+              "rgba(255, 206, 86, 0.6)"
+            ],
+            borderColor: [
+              "rgb(54, 162, 235)",
+              "rgb(255, 99, 132)",
+              "rgb(75, 192, 192)",
+              "rgb(255, 206, 86)"
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              title: { display: true, text: "Average Score (out of 50)" },
+              beginAtZero: true,
+              suggestedMax: 50
+            },
+            x: {
+              grid: { display: false }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // --- Toggle Analysis Views ---
+    function setupToggle(data) {
+      document.getElementById("detailedToggle").addEventListener("change", () => {
+        document.getElementById("detailedSection").style.display = "block";
+        document.getElementById("subjectSection").style.display = "none";
+      });
+      document.getElementById("subjectToggle").addEventListener("change", () => {
+        document.getElementById("detailedSection").style.display = "none";
+        document.getElementById("subjectSection").style.display = "block";
+        renderSubjectAnalysis(data);
+      });
+    }
+
+    // --- Initialization ---
+    async function init() {
+      const username = getQueryParam("user");
+      if (!username) {
+        showAlert("No user specified. Please add '?user=YourUsername' to the URL.", "warning");
+        return;
+      }
+      document.getElementById("userInfo").innerHTML = `<h4>User: <span class="gradient-text">${username}</span></h4>`;
+      const data = await fetchData(username);
+      renderDetailedTable(data);
+      renderScoreTrendChart(data);
+      setupToggle(data);
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
   </script>
-
-  <!-- Bootstrap Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
