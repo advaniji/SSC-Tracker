@@ -10,10 +10,9 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- html2pdf.js (for PDF generation if needed) -->
+  <!-- html2pdf.js (if needed) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
   <style>
-    /* Center the login card vertically and horizontally */
     .login-container {
       min-height: 100vh;
       display: flex;
@@ -59,7 +58,7 @@
           </div>
           <div class="col-md-4 mb-3">
             <label for="testDate" class="form-label">Date</label>
-            <!-- Default to today's date; make non-editable manually -->
+            <!-- Default to today's date; non-editable manually -->
             <input type="date" id="testDate" class="form-control" required readonly onkeydown="return false;" onpaste="return false;">
           </div>
           <div class="col-md-4 mb-3">
@@ -120,27 +119,28 @@
       <!-- Graphs Section -->
       <h2 class="mt-5 text-center">Progress Tracker</h2>
       <div class="row">
-        <!-- Overall Tracker: Overall Marks over Time -->
+        <!-- Overall Tracker -->
         <div class="col-md-6">
           <canvas id="overallChart"></canvas>
         </div>
-        <!-- Subject Tracker: Line graphs for each subject -->
+        <!-- Subject Tracker -->
         <div class="col-md-6">
           <canvas id="subjectChart"></canvas>
         </div>
       </div>
 
-      <!-- Link to Complete Analysis Page -->
+      <!-- Link to Analysis Page -->
       <div class="mt-4 text-center">
-        <!-- Pass the logged in username to marks.html via query parameter -->
-        <a id="analysisLink" href="#" class="btn btn-primary"><i class="fa fa-chart-line"></i> Complete Analysis</a>
+        <a id="analysisLink" href="#" class="btn btn-primary">
+          <i class="fa fa-chart-line"></i> Complete Analysis
+        </a>
       </div>
     </div>
   </div>
 
   <!-- JavaScript -->
   <script>
-    // Set the date input to today's date (YYYY-MM-DD) and prevent manual editing.
+    // Set date input to today's date
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date().toISOString().split('T')[0];
       const dateInput = document.getElementById('testDate');
@@ -148,16 +148,14 @@
       dateInput.setAttribute('readonly', true);
     });
 
-    // Global variables for credentials, service account info, and logged-in username.
+    // Global variables for credentials and logged-in username
     let userCredentials = [];
-    let googleServiceAccount = {};
-    let loggedInUser = ""; // will store the username after login
+    let loggedInUser = ""; // Will store username after login
 
-    // Load passwords from passwords.json (ensure this file is in the same folder)
+    // Load passwords from passwords.json (in the same folder)
     fetch('./passwords.json')
       .then(response => response.json())
       .then(data => {
-        // Convert passwords.json into an array of objects: { username, password }
         userCredentials = Object.keys(data).map(username => ({
           username: username.toLowerCase(),
           password: data[username]
@@ -165,48 +163,56 @@
       })
       .catch(err => console.error("Error loading passwords.json:", err));
 
-    // Load Google Service Account JSON from marks.json (for future use)
+    // (Optional) Load Google Service Account JSON from marks.json if needed in the future
     fetch('./marks.json')
       .then(response => response.json())
-      .then(data => {
-        googleServiceAccount = data;
-        console.log("Google Service Account loaded:", googleServiceAccount);
-      })
+      .then(data => console.log("Google Service Account loaded:", data))
       .catch(err => console.error("Error loading marks.json:", err));
 
-    // Simple login logic using credentials from passwords.json
+    // Login logic using passwords.json
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const username = document.getElementById('username').value.trim().toLowerCase();
-      const password = document.getElementById('password').value;
-      const validUser = userCredentials.find(u => u.username === username && u.password === password);
+      const usernameInput = document.getElementById('username').value.trim().toLowerCase();
+      const passwordInput = document.getElementById('password').value;
+      const validUser = userCredentials.find(u => u.username === usernameInput && u.password === passwordInput);
       if (validUser) {
-        loggedInUser = validUser.username; // store logged-in username
-        // Set the analysis link with the username in query param (capitalized first letter)
+        loggedInUser = validUser.username;
+        // Set analysis link with username as query parameter (first letter capitalized)
         const userParam = loggedInUser.charAt(0).toUpperCase() + loggedInUser.slice(1);
         document.getElementById('analysisLink').href = "marks.html?user=" + userParam;
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
+        // Fetch and update charts from Google Sheets upon login
+        fetchDataFromSheet();
       } else {
         document.getElementById('loginError').innerText = 'Invalid credentials';
       }
     });
 
-    // Local storage for test data (for chart updates)
-    let testData = [];
+    // Build the URL for opensheet based on loggedInUser
+    function getSheetDataUrl() {
+      const userParam = loggedInUser.charAt(0).toUpperCase() + loggedInUser.slice(1);
+      const sheetId = "1m6gtbbqfwdrYKj5mo4dP2oH9Xbx-jDAFiCXqK94OrVQ";
+      return `https://opensheet.elk.sh/${sheetId}/${userParam}`;
+    }
 
-    // URL of your deployed Google Apps Script Web App (actual value)
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbxXf0qT6QWrqSy7td0HAmcM9a36mVCvasRnKwBiWbnkNTzbxvVXDRirm19oQZfMSRp0/exec";
+    // Fetch test data from Google Sheets via opensheet and update charts
+    function fetchDataFromSheet() {
+      const dataUrl = getSheetDataUrl();
+      fetch(dataUrl)
+        .then(response => response.json())
+        .then(data => {
+          updateCharts(data);
+        })
+        .catch(err => console.error("Error fetching sheet data:", err));
+    }
 
     // Handle test form submission
     document.getElementById('testForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Gather form values
       let testId = document.getElementById('testId').value.trim();
-      if (!testId) {
-        testId = 'T' + Math.floor(Math.random() * 100000);
-      }
+      if (!testId) { testId = 'T' + Math.floor(Math.random() * 100000); }
       const testDate = document.getElementById('testDate').value;
       const testType = document.getElementById('testType').value;
       const section = document.getElementById('section').value;
@@ -217,10 +223,8 @@
       const reasoning = parseFloat(document.getElementById('reasoning').value);
       const gk = parseFloat(document.getElementById('gk').value);
       
-      // Calculate overall marks (sum of all subjects)
       const totalMarks = maths + english + reasoning + gk;
       
-      // Build test entry object
       const testEntry = { 
         username: loggedInUser, 
         testId, 
@@ -236,31 +240,32 @@
         gk
       };
       
-      // Update local test data for charts
-      testData.push(testEntry);
-      updateCharts();
-      
-      // Send testEntry to the Google Apps Script endpoint for persistent storage.
+      // Send testEntry to the Google Apps Script endpoint
+      const scriptUrl = "https://script.google.com/macros/s/AKfycbxXf0qT6QWrqSy7td0HAmcM9a36mVCvasRnKwBiWbnkNTzbxvVXDRirm19oQZfMSRp0/exec";
       fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testEntry)
       })
       .then(response => response.json())
-      .then(data => console.log("Data sent to sheet:", data))
+      .then(data => {
+        console.log("Data sent to sheet:", data);
+        // After successful submission, fetch updated data from sheet
+        fetchDataFromSheet();
+      })
       .catch(err => console.error("Error sending data:", err));
     });
 
-    // Initialize Charts using Chart.js
+    // Update charts based on data fetched from the sheet
     let overallChart, subjectChart;
-    function updateCharts() {
-      // Prepare overall tracker data (dates vs. overall marks)
-      const labels = testData.map(entry => entry.testDate);
-      const overallData = testData.map(entry => entry.totalMarks);
-
+    function updateCharts(data) {
+      if (!data || data.length === 0) return;
+      const labels = data.map(entry => entry["Date"]);
+      const overallData = data.map(entry => Number(entry["Overall Marks"]));
+      
       if (overallChart) overallChart.destroy();
       if (subjectChart) subjectChart.destroy();
-
+      
       // Overall Tracker Chart
       const overallCtx = document.getElementById('overallChart').getContext('2d');
       overallChart = new Chart(overallCtx, {
@@ -275,19 +280,15 @@
             fill: false
           }]
         },
-        options: {
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
+        options: { scales: { y: { beginAtZero: true } } }
       });
-
-      // Subject Tracker Chart (each subject as a line)
-      const mathsData = testData.map(entry => entry.maths);
-      const englishData = testData.map(entry => entry.english);
-      const reasoningData = testData.map(entry => entry.reasoning);
-      const gkData = testData.map(entry => entry.gk);
-
+      
+      // Subject Tracker Chart
+      const mathsData = data.map(entry => Number(entry["Maths"]));
+      const englishData = data.map(entry => Number(entry["English"]));
+      const reasoningData = data.map(entry => Number(entry["Reasoning"]));
+      const gkData = data.map(entry => Number(entry["GK"]));
+      
       const subjectCtx = document.getElementById('subjectChart').getContext('2d');
       subjectChart = new Chart(subjectCtx, {
         type: 'line',
@@ -300,11 +301,7 @@
             { label: 'GK', data: gkData, borderColor: 'purple', fill: false }
           ]
         },
-        options: {
-          scales: {
-            y: { beginAtZero: true, max: 50 }
-          }
-        }
+        options: { scales: { y: { beginAtZero: true, max: 50 } } }
       });
     }
   </script>
