@@ -52,96 +52,66 @@
       padding: 0.5rem; 
     }
     .spinner-overlay { 
-      position: fixed; 
-      top: 0; left: 0; width: 100%; height: 100%; 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
       background: rgba(255, 255, 255, 0.8); 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-      z-index: 9999; 
-      opacity: 0; 
-      visibility: hidden; 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      z-index: 9999; opacity: 0; visibility: hidden; 
       transition: opacity 0.3s ease, visibility 0s linear 0.3s; 
     }
     .spinner-overlay.active { 
-      opacity: 1; 
-      visibility: visible; 
+      opacity: 1; visibility: visible; 
       transition: opacity 0.3s ease, visibility 0s linear 0s; 
     }
     #spinnerText { 
-      margin-top: 1rem; 
-      color: rgb(var(--bs-primary-rgb)); 
-      font-weight: 500; 
+      margin-top: 1rem; color: rgb(var(--bs-primary-rgb)); font-weight: 500; 
     }
     .form-label { 
-      font-weight: 500; 
-      margin-bottom: 0.25rem; 
-      font-size: 0.9rem; 
+      font-weight: 500; margin-bottom: 0.25rem; font-size: 0.9rem; 
     }
     .form-control, .form-select { 
-      background-color: #f1f5f9; 
-      border: 1px solid #e2e8f0; 
+      background-color: #f1f5f9; border: 1px solid #e2e8f0; 
     }
     .form-control:focus, .form-select:focus { 
-      background-color: #fff; 
-      border-color: rgba(var(--bs-primary-rgb), 0.5); 
+      background-color: #fff; border-color: rgba(var(--bs-primary-rgb), 0.5); 
       box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.15); 
     }
     #textAnalysis a { 
-      color: rgb(var(--bs-primary-rgb)); 
-      text-decoration: none; 
+      color: rgb(var(--bs-primary-rgb)); text-decoration: none; 
     }
     #textAnalysis a:hover { 
       text-decoration: underline; 
     }
     .alert { 
-      margin-top: 1rem; 
-      margin-bottom: 0; 
+      margin-top: 1rem; margin-bottom: 0; 
     }
     .section-heading { 
-      margin-bottom: 1.5rem; 
-      padding-bottom: 0.5rem; 
+      margin-bottom: 1.5rem; padding-bottom: 0.5rem; 
       border-bottom: 2px solid rgba(var(--bs-primary-rgb), 0.2); 
       display: inline-block; 
     }
     #mainContent { 
       display: none; 
-      padding-top: 80px; 
-      padding-bottom: 40px; 
+      padding-top: 80px; padding-bottom: 40px; 
     }
     #loginSection { 
-      min-height: 80vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
+      min-height: 80vh; display: flex; align-items: center; justify-content: center; 
     }
     .login-card { 
-      max-width: 400px; 
-      width: 100%; 
+      max-width: 400px; width: 100%; 
     }
     /* 2x2 Grid for Dashboard */
     .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-      margin-top: 1.5rem;
+      display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem;
     }
     @media (min-width: 768px) {
       .dashboard-grid {
         grid-template-columns: repeat(2, 1fr);
       }
-      .grid-item-chart {
-        min-height: 350px;
-      }
-      .grid-item-text {
-        min-height: 350px;
-      }
+      .grid-item-chart { min-height: 350px; }
+      .grid-item-text { min-height: 350px; }
     }
     .grid-item-text .card-body {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      display: flex; flex-direction: column; justify-content: space-between;
     }
   </style>
 </head>
@@ -173,7 +143,7 @@
             <label for="username" class="form-label">Username</label>
             <select class="form-select" id="username" required>
               <option value="" disabled selected>Select your username</option>
-              <!-- Options will be populated by JavaScript -->
+              <!-- Options will be populated via getusers endpoint -->
             </select>
           </div>
           <div class="mb-3">
@@ -317,11 +287,10 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
-          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
-          crossorigin="anonymous"></script>
-
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script>
     // --- Configuration ---
+    // Use your actual deployed Google Apps Script URL here:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAIi9huCzHb0AE3ufMmIS2CYLjRF-mBhObPUHkoNhVWln4bAJzIWNIcRQlcKsz8WE5/exec";
 
     // --- Global Variables ---
@@ -353,13 +322,14 @@
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
+      // Check if user is already logged in
       currentUsername = sessionStorage.getItem('sscTrackerUser');
       if (currentUsername) {
         showMainContent();
         fetchData();
       } else {
         showLoginSection();
-        fetchUsers();
+        fetchUsers(); // Populate the dropdown from GitHub JSON credentials
       }
 
       // Add event listeners
@@ -371,6 +341,28 @@
       refreshDataBtn.addEventListener('click', fetchData);
       toggleTestInputs();
     });
+
+    // --- Fetch Users from GitHub Credentials JSON ---
+    async function fetchUsers() {
+      try {
+        // Replace with your actual GitHub raw URL for credentials.json
+        const gitHubUrl = "https://raw.githubusercontent.com/yourusername/yourrepo/main/credentials.json";
+        const response = await fetch(gitHubUrl);
+        if (!response.ok) throw new Error('Failed to fetch credentials.');
+        const credentials = await response.json();
+        const usernameSelect = document.getElementById('username');
+        usernameSelect.innerHTML = '<option value="" disabled selected>Select your username</option>';
+        Object.keys(credentials).forEach(user => {
+          const option = document.createElement('option');
+          option.value = user;
+          option.textContent = user;
+          usernameSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        showLoginAlert('Could not load user list. Please try again.', 'danger');
+      }
+    }
 
     // --- Login/Logout Functions ---
     async function handleLogin(event) {
@@ -393,14 +385,12 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'login', username, password })
         });
-
         if (!response.ok) {
           let errorMsg = `HTTP error! Status: ${response.status}`;
           try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch(e) {}
           throw new Error(errorMsg);
         }
         const result = await response.json();
-
         if (result.status === 'success') {
           currentUsername = result.username;
           sessionStorage.setItem('sscTrackerUser', currentUsername);
@@ -409,7 +399,7 @@
         } else {
           throw new Error(result.message || 'Login failed.');
         }
-      } catch (error) {
+      } catch(error) {
         console.error("Login error:", error);
         showLoginAlert(`Login failed: ${error.message}`, 'danger');
         usernameInput.focus();
@@ -584,7 +574,6 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(requestBody)
         });
-
         if (!response.ok) {
           let errorMsg = `HTTP error! Status: ${response.status}`;
           try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch(e) {}
@@ -608,7 +597,7 @@
       }
     }
 
-    // --- Dashboard & Charts ---
+    // --- Dashboard & Chart Rendering ---
     function updateDashboard() {
       if (!window.Chart || !window.Chart._adapters) { setTimeout(updateDashboard, 100); return; }
       const fullTestData = allTestData.filter(d => d.TestType === 'full' && d.TotalMarks !== null && d.Date)
@@ -659,33 +648,17 @@
               suggestedMax: 200
             }
           },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-              callbacks: {
-                title: function(context) {
-                  return new Date(context[0].parsed.x).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                }
-              }
-            }
-          },
+          plugins: { legend: { display: false } },
           interaction: { mode: 'nearest', axis: 'x', intersect: false }
         }
       });
     }
-
     function renderSectionAvgChart(data) {
       const ctx = document.getElementById('sectionAvgChart').getContext('2d');
       const sections = ['Maths', 'English', 'Reasoning', 'GK'];
       const averages = { Maths: 0, English: 0, Reasoning: 0, GK: 0 };
       const counts = { Maths: 0, English: 0, Reasoning: 0, GK: 0 };
-      if (data.length === 0) {
-        showNoDataMessage('sectionAvgChart');
-        if (sectionAvgChartInstance) sectionAvgChartInstance.destroy();
-        return;
-      }
+      if (data.length === 0) { showNoDataMessage('sectionAvgChart'); if (sectionAvgChartInstance) sectionAvgChartInstance.destroy(); return; }
       data.forEach(d => {
         sections.forEach(sec => {
           if (d[sec] !== null && d[sec] !== undefined && !isNaN(Number(d[sec]))) {
@@ -735,15 +708,10 @@
         }
       });
     }
-
     function renderProviderAvgChart(data) {
       const ctx = document.getElementById('providerAvgChart').getContext('2d');
       const scoresByProvider = {};
-      if (data.length === 0) {
-        showNoDataMessage('providerAvgChart');
-        if (providerAvgChartInstance) providerAvgChartInstance.destroy();
-        return;
-      }
+      if (data.length === 0) { showNoDataMessage('providerAvgChart'); if (providerAvgChartInstance) providerAvgChartInstance.destroy(); return; }
       data.forEach(d => {
         const provider = d.Provider || 'Unknown';
         if (!scoresByProvider[provider]) scoresByProvider[provider] = { total: 0, count: 0 };
@@ -784,7 +752,6 @@
         }
       });
     }
-
     function showNoDataMessage(canvasId) {
       const canvas = document.getElementById(canvasId);
       const ctx = canvas.getContext('2d');
@@ -800,7 +767,6 @@
       ctx.fillText('No data available', containerWidth / 2, containerHeight / 2);
       ctx.restore();
     }
-
     function generateColorPalette(count) {
       const baseColors = [
         'rgb(99, 102, 241)',
@@ -817,8 +783,6 @@
       }
       return colors;
     }
-
-    // --- Text Analysis ---
     function renderTextAnalysis(data) {
       const analysisDiv = document.getElementById('textAnalysis');
       const totalTests = data.length;
@@ -886,7 +850,6 @@
           <p class="mt-2 mb-0 small text-muted">Based on ${fullTestData.length} full tests.</p>
         `;
       }
-      analysisHtml += `<p class="mt-3 mb-0"><a href="marks.html" target="_blank">View All Marks Details &raquo;</a></p>`;
       analysisDiv.innerHTML = analysisHtml;
     }
 
